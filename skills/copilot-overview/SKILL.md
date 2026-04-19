@@ -8,6 +8,26 @@ Use this skill when the user asks to: generate copilot overview, show my copilot
 
 ## How to generate
 
+### Preferred: Use the discovery tool
+
+If the `discover_copilot_environment` tool is available (provided by this plugin's extension), call it first:
+
+```
+discover_copilot_environment({ scan_roots: "~/projects" })
+```
+
+This returns a complete `ENV_DATA` JSON object with all items discovered programmatically. Skip to Step 3.
+
+The tool:
+- Scans all config locations automatically
+- Merges plugin-contributed agents/skills/MCP into the main lists
+- Redacts home paths and sensitive values by default
+- Discovers project-level configs across multiple repos
+
+If the tool is NOT available (e.g. extension didn't load), fall back to manual scanning below.
+
+### Fallback: Manual introspection
+
 ### Step 1: Collect environment data
 
 Scan the following locations. For each item found, record: name, type, scope, source path, and a one-line description (read from file frontmatter or first paragraph if available).
