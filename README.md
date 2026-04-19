@@ -1,0 +1,62 @@
+# copilot-overview
+
+A Copilot CLI plugin that generates a personalized HTML dashboard of your environment.
+
+## What it does
+
+Say **"generate my copilot overview"** and the skill introspects your setup:
+
+- Instructions, agents, skills, MCP servers, extensions, plugins
+- Project-level configs (`.copilot/`, `.github/`, `.squad/`)
+- Plugin-contributed assets (with parent-child grouping)
+- CLI version and model info
+
+Outputs a self-contained HTML dashboard with an interactive operating stack (M365 Copilot → GitHub Copilot → CLI → Agency → Squad), explainer cards, and filterable inventory.
+
+## Install
+
+```
+/plugin install JW-Sthlm/copilot-overview
+```
+
+## Usage
+
+In any Copilot CLI session:
+
+```
+generate my copilot overview
+```
+
+Or: `show my copilot setup`, `copilot inventory`, `environment report`
+
+## Privacy
+
+**Safe by default.** The skill instructs the model to:
+- Redact absolute home paths to `~/`
+- Never include env var values from MCP configs
+- Never include emails or secrets
+- Show server names and types only
+
+## How it works
+
+1. **SKILL.md** triggers on environment-related prompts
+2. Model scans your `~/.copilot/`, plugins, and current project
+3. Populates a structured `ENV_DATA` JavaScript object
+4. Injects it into `template.html` — a data-driven renderer
+5. Saves and opens the result
+
+The template renders everything from the data object. No personal data is hardcoded in the template itself.
+
+## Structure
+
+```
+plugin.json                          # Plugin manifest
+skills/copilot-overview/
+  SKILL.md                           # Skill instructions
+  references/
+    template.html                    # Data-driven HTML template
+```
+
+## License
+
+MIT

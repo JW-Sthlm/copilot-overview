@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Copilot CLI Overview</title>
+<style>
+  :root {
+    --bg: #0d1117; --surface: #161b22; --border: #30363d;
+    --text: #e6edf3; --text-dim: #8b949e; --text-bright: #f0f6fc;
+    --blue: #58a6ff; --green: #3fb950; --purple: #bc8cff;
+    --orange: #d29922; --red: #f85149; --cyan: #39d353;
+    --radius: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.5;
+    max-width: 1100px; margin: 0 auto; padding: 24px;
+  }
+  h1 { color: var(--text-bright); font-size: 1.8rem; margin-bottom: 4px; }
+  .subtitle { color: var(--text-dim); font-size: 0.95rem; margin-bottom: 24px; }
+  .meta-bar { display:flex; gap:16px; flex-wrap:wrap; font-size:0.78rem; color:var(--text-dim); margin-bottom:24px; }
+  .meta-bar span { background:var(--surface); border:1px solid var(--border); padding:3px 10px; border-radius:12px; }
+
+  /* Stats bar */
+  .stats { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 32px; }
+  .stat {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 12px 20px;
+    display: flex; flex-direction: column; align-items: center; min-width: 100px;
+    text-decoration: none; transition: border-color 0.15s; cursor:pointer;
+  }
+  .stat:hover { border-color: var(--blue); }
+  .stat-number { font-size: 1.6rem; font-weight: 700; }
+  .stat-label { font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* Legend */
+  .legend { display:flex; gap:16px; margin-bottom:24px; flex-wrap:wrap; font-size:0.8rem; color:var(--text-dim); }
+  .legend-item { display:flex; align-items:center; gap:6px; }
+  .legend-dot { width:10px; height:10px; border-radius:50%; display:inline-block; }
+
+  /* Stack */
+  .stack-card {
+    padding:14px 18px; border-radius:0 var(--radius) var(--radius) 0;
+    cursor:pointer; margin-bottom:2px;
+  }
+  .stack-card .detail { display:none; margin-top:10px; padding-top:10px; border-top:1px solid var(--border); font-size:0.82rem; color:var(--text-dim); line-height:1.6; }
+  .stack-card.open .detail { display:block; }
+  .stack-title { font-weight:700; color:var(--text-bright); font-size:0.95rem; }
+  .stack-sub { color:var(--text-dim); font-size:0.82rem; }
+  .stack-badge { margin-left:auto; color:var(--text-dim); font-size:0.7rem; }
+
+  /* Layer sections */
+  .layer {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); margin-bottom: 16px; overflow: hidden;
+  }
+  .layer-header {
+    display:flex; align-items:center; gap:12px;
+    padding:16px 20px; cursor:pointer; user-select:none; transition:background 0.15s;
+  }
+  .layer-header:hover { background: rgba(255,255,255,0.03); }
+  .layer-icon { font-size:1.4rem; width:32px; text-align:center; }
+  .layer-title { font-size:1.1rem; font-weight:600; color:var(--text-bright); flex:1; }
+  .layer-count { font-size:0.8rem; color:var(--text-dim); background:var(--bg); padding:2px 10px; border-radius:12px; }
+  .layer-chevron { color:var(--text-dim); transition:transform 0.2s; font-size:0.9rem; }
+  .layer.open .layer-chevron { transform:rotate(90deg); }
+  .layer-desc { padding:0 20px 0 64px; color:var(--text-dim); font-size:0.85rem; margin-top:-8px; margin-bottom:12px; }
+  .layer-items { display:none; border-top:1px solid var(--border); padding:12px 20px 16px; }
+  .layer.open .layer-items { display:block; }
+
+  /* Items */
+  .item { display:flex; align-items:flex-start; gap:12px; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.04); }
+  .item:last-child { border-bottom:none; }
+  .item-name { font-weight:600; font-size:0.9rem; color:var(--text-bright); min-width:180px; font-family:'SFMono-Regular',Consolas,monospace; }
+  .item-scope { font-size:0.72rem; padding:3px 10px; border-radius:4px; font-weight:600; white-space:nowrap; min-width:65px; text-align:center; letter-spacing:0.3px; text-transform:uppercase; }
+  .scope-global { background:rgba(88,166,255,0.15); color:var(--blue); border:1px solid rgba(88,166,255,0.25); }
+  .scope-plugin { background:rgba(188,140,255,0.15); color:var(--purple); border:1px solid rgba(188,140,255,0.25); }
+  .scope-system { background:rgba(139,148,158,0.15); color:var(--text-dim); border:1px solid rgba(139,148,158,0.25); }
+  .scope-project { background:rgba(63,185,80,0.15); color:var(--green); border:1px solid rgba(63,185,80,0.25); }
+  .item-desc { font-size:0.85rem; color:var(--text-dim); flex:1; }
+  .subgroup { margin:8px 0 4px; font-size:0.75rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.5px; padding-bottom:4px; border-bottom:1px solid var(--border); }
+
+  /* Explainer cards */
+  .explainer { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:24px; margin-bottom:24px; }
+  .explainer h2 { font-size:1.1rem; color:var(--text-bright); margin-bottom:12px; }
+  .model-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:12px; }
+  .model-card { padding:12px 16px; border-radius:var(--radius); border:1px solid var(--border); font-size:0.85rem; cursor:pointer; transition:border-color 0.15s; }
+  .model-card:hover { border-color:var(--blue); }
+  .model-card strong { color:var(--text-bright); }
+  .model-card .eq { color:var(--blue); font-weight:600; margin-right:4px; }
+  .card-details { display:none; margin-top:12px; padding-top:12px; border-top:1px solid var(--border); font-size:0.82rem; line-height:1.7; color:var(--text-dim); }
+  .card-details strong { color:var(--text); font-size:0.78rem; }
+  .card-details code { color:var(--orange); background:rgba(210,153,34,0.1); padding:1px 5px; border-radius:3px; font-size:0.78rem; }
+  .model-card.expanded .card-details { display:block; }
+  .model-card.expanded { grid-column:1/-1; }
+  .learn-more { display:block; margin-top:8px; font-size:0.75rem; color:var(--blue); opacity:0.7; }
+  .model-card:hover .learn-more { opacity:1; }
+  .model-card.expanded .learn-more { display:none; }
+
+  /* Scoping */
+  .scope-diagram { display:flex; gap:24px; flex-wrap:wrap; }
+  .scope-box { flex:1; min-width:280px; padding:16px; border-radius:var(--radius); font-size:0.85rem; }
+  .scope-box.global-box { border:2px solid var(--blue); background:rgba(88,166,255,0.05); }
+  .scope-box.project-box { border:2px solid var(--green); background:rgba(63,185,80,0.05); }
+  .scope-box h3 { font-size:0.95rem; margin-bottom:8px; }
+  .scope-box code { font-size:0.8rem; color:var(--orange); background:rgba(210,153,34,0.1); padding:1px 6px; border-radius:4px; }
+  .scope-box ul { list-style:none; margin-top:8px; }
+  .scope-box li { padding:2px 0; }
+  .scope-box li::before { content:"→ "; color:var(--text-dim); }
+
+  /* Projects */
+  .project-card { border:1px solid var(--border); border-radius:6px; margin-bottom:8px; overflow:hidden; }
+  .project-header { display:flex; align-items:center; gap:10px; padding:10px 14px; cursor:pointer; transition:background 0.15s; }
+  .project-header:hover { background:rgba(255,255,255,0.03); }
+  .project-name { font-family:'SFMono-Regular',Consolas,monospace; font-weight:600; font-size:0.9rem; color:var(--text-bright); }
+  .project-badges { display:flex; gap:6px; flex:1; }
+  .pbadge { font-size:0.65rem; padding:2px 7px; border-radius:8px; font-weight:500; }
+  .pbadge-agent { background:rgba(63,185,80,0.15); color:var(--green); }
+  .pbadge-skill { background:rgba(188,140,255,0.15); color:var(--purple); }
+  .pbadge-mcp { background:rgba(210,153,34,0.15); color:var(--orange); }
+  .pbadge-squad { background:rgba(88,166,255,0.15); color:var(--blue); }
+  .project-toggle { color:var(--text-dim); font-size:0.85rem; font-weight:600; width:20px; text-align:center; }
+  .project-card.expanded .project-toggle { transform:rotate(45deg); }
+  .project-desc { padding:0 14px 10px; font-size:0.82rem; color:var(--text-dim); }
+  .project-details { display:none; padding:10px 14px; border-top:1px solid var(--border); background:rgba(0,0,0,0.2); font-size:0.8rem; }
+  .project-card.expanded .project-details { display:block; }
+
+  /* Filter */
+  .filter-bar { display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .filter-btn { background:var(--surface); border:1px solid var(--border); color:var(--text-dim); padding:6px 14px; border-radius:16px; cursor:pointer; font-size:0.8rem; transition:all 0.15s; }
+  .filter-btn:hover { border-color:var(--blue); color:var(--blue); }
+  .filter-btn.active { background:rgba(88,166,255,0.15); border-color:var(--blue); color:var(--blue); }
+
+  footer { margin-top:32px; padding-top:16px; border-top:1px solid var(--border); color:var(--text-dim); font-size:0.8rem; text-align:center; }
+  footer code { color:var(--orange); background:rgba(210,153,34,0.1); padding:1px 6px; border-radius:4px; }
+
+  @media (max-width:600px) {
+    .item { flex-direction:column; gap:4px; }
+    .item-name { min-width:auto; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     DATA PAYLOAD — The model fills this object after introspection.
+     Everything below renders from this data. No hardcoded items.
+     ============================================================ -->
+<script>
+// SKILL-GENERATED: Replace this empty object with the populated ENV_DATA
+const ENV_DATA = {};
+</script>
+
+<h1>⚡ Copilot CLI Overview</h1>
+<p class="subtitle" id="subtitle">Your Copilot CLI environment at a glance</p>
+<div class="meta-bar" id="meta-bar"></div>
+
+<!-- Stats bar -->
+<div class="stats" id="stats-bar"></div>
+
+<!-- ============================================================
+     OPERATING STACK — Static content, same for everyone
+     ============================================================ -->
+<div class="explainer" style="margin-bottom:24px">
+  <h2>The operating stack</h2>
+  <p style="color:var(--text-dim); font-size:0.85rem; margin-bottom:16px;">Five layers, bottom-up. M365 Copilot is the foundation. Each layer builds on the one below.</p>
+  <div style="display:flex; flex-direction:column; gap:2px;">
+
+    <div class="stack-card" style="background:rgba(210,153,34,0.08); border-left:3px solid var(--orange); margin-left:96px;" onclick="this.classList.toggle('open')">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="font-size:1.2rem;">👥</span>
+        <span class="stack-title">Squad</span>
+        <span class="stack-sub">— multi-agent orchestration</span>
+        <span class="stack-badge">optional · per-project</span>
+      </div>
+      <div class="detail">
+        Persistent team of specialized AI agents in your repo.<br>
+        <strong style="color:var(--text)">Install:</strong> <code>npm install -g @anthropic/squad</code> then <code>squad init</code><br>
+        <strong style="color:var(--text)">Team roles:</strong> Lead, Frontend, Backend, Tester, Scribe — each with a <code>charter.md</code><br>
+        <strong style="color:var(--text)">State:</strong> All config in <code>.squad/</code> — plain text, version-controllable
+      </div>
+    </div>
+
+    <div class="stack-card" style="background:rgba(188,140,255,0.08); border-left:3px solid var(--purple); margin-left:72px;" onclick="this.classList.toggle('open')">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="font-size:1.2rem;">🤖</span>
+        <span class="stack-title">Agency</span>
+        <span class="stack-sub">— built-in agentic runtime</span>
+        <span class="stack-badge">built-in · no install</span>
+      </div>
+      <div class="detail">
+        CLI spawns sub-agents in parallel. One orchestrator delegating to specialists.<br>
+        <strong style="color:var(--text)">Sub-agents:</strong> explore, task, general-purpose, rubber-duck, code-review<br>
+        <strong style="color:var(--text)">Fleet mode:</strong> <code>/fleet</code> — parallel execution for large tasks<br>
+        <strong style="color:var(--text)">Delegation:</strong> <code>/delegate</code> — hand off to GitHub Coding Agent
+      </div>
+    </div>
+
+    <div class="stack-card" style="background:rgba(63,185,80,0.08); border-left:3px solid var(--green); margin-left:48px;" onclick="this.classList.toggle('open')">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="font-size:1.2rem;">⚡</span>
+        <span class="stack-title">Copilot CLI</span>
+        <span class="stack-sub">— terminal-native interface</span>
+        <span class="stack-badge">← this dashboard</span>
+      </div>
+      <div class="detail">
+        Conversational AI agent in your terminal. Reads, writes, and executes code.<br>
+        <strong style="color:var(--text)">Extensibility:</strong> instructions, agents, skills, MCP servers, extensions, plugins<br>
+        <strong style="color:var(--text)">Modes:</strong> Normal, Plan, Autopilot<br>
+        <strong style="color:var(--text)">Install:</strong> <code>winget install GitHub.Copilot</code> · <code>brew install copilot-cli</code> · <code>npm install -g @github/copilot</code>
+      </div>
+    </div>
+
+    <div class="stack-card" style="background:rgba(88,166,255,0.08); border-left:3px solid var(--blue); margin-left:24px;" onclick="this.classList.toggle('open')">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="font-size:1.2rem;">🐙</span>
+        <span class="stack-title">GitHub Copilot</span>
+        <span class="stack-sub">— the developer AI platform</span>
+      </div>
+      <div class="detail">
+        GitHub's AI platform. Four surfaces:<br>
+        <strong style="color:var(--text)">Chat</strong> — VS Code, JetBrains, github.com sidebar<br>
+        <strong style="color:var(--text)">Coding Agent</strong> — assign Issues, get PRs back<br>
+        <strong style="color:var(--text)">CLI</strong> — terminal-native, agentic<br>
+        <strong style="color:var(--text)">Extensions</strong> — VS Code and github.com<br>
+        <span style="font-size:0.78rem; margin-top:4px; display:block;">Tiers: Pro, Pro+, Business, Enterprise. Quota pooled across surfaces.</span>
+      </div>
+    </div>
+
+    <div class="stack-card" style="background:rgba(139,148,158,0.08); border-left:3px solid var(--text-dim);" onclick="this.classList.toggle('open')">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="font-size:1.2rem;">🏢</span>
+        <span class="stack-title">Microsoft 365 Copilot</span>
+        <span class="stack-sub">— enterprise AI foundation</span>
+        <span class="stack-badge">click to expand ↓</span>
+      </div>
+      <div class="detail">
+        Microsoft's AI layer across the productivity suite.<br>
+        <strong style="color:var(--text)">Surfaces:</strong> Teams, Outlook, Word, Excel, PowerPoint, SharePoint, Chat<br>
+        <strong style="color:var(--text)">Graph grounding:</strong> answers grounded in your emails, meetings, files, org<br>
+        <strong style="color:var(--text)">Bridge to CLI:</strong> WorkIQ plugin and M365 MCP tools bring M365 data into CLI sessions<br>
+        <span style="font-size:0.78rem; margin-top:4px; display:block;">Separate license from GitHub Copilot. Both active simultaneously via WorkIQ bridge.</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Legend -->
+<div class="legend">
+  <div class="legend-item"><span class="legend-dot" style="background:var(--blue)"></span> Global — always loaded</div>
+  <div class="legend-item"><span class="legend-dot" style="background:var(--purple)"></span> Plugin — installed package</div>
+  <div class="legend-item"><span class="legend-dot" style="background:var(--text-dim)"></span> System — built-in</div>
+  <div class="legend-item"><span class="legend-dot" style="background:var(--green)"></span> Project — per-repo</div>
+</div>
+
+<!-- ============================================================
+     HOW THE LAYERS CONNECT — Static explainer
+     ============================================================ -->
+<div class="explainer">
+  <h2>How the layers connect</h2>
+  <div class="model-grid">
+    <div class="model-card" onclick="this.classList.toggle('expanded')">
+      <span class="eq">Instructions =</span> <strong>HOW</strong> to behave<br>
+      <span style="color:var(--text-dim)">Personality, rules, guardrails. Plain markdown.</span>
+      <span class="learn-more">Learn more ↓</span>
+      <div class="card-details">
+        <strong>File format:</strong> <code>.md</code> (plain markdown)<br>
+        <strong>Global:</strong> <code>~/.copilot/copilot-instructions.md</code><br>
+        <strong>Project:</strong> <code>.github/copilot-instructions.md</code>, <code>AGENTS.md</code>, <code>CLAUDE.md</code><br>
+        <strong>How it works:</strong> Loaded silently into every prompt. The model reads these before your message.
+      </div>
+    </div>
+    <div class="model-card" onclick="this.classList.toggle('expanded')">
+      <span class="eq">Agents =</span> <strong>PERSONA</strong><br>
+      <span style="color:var(--text-dim)">Specialized roles invoked by name. No code.</span>
+      <span class="learn-more">Learn more ↓</span>
+      <div class="card-details">
+        <strong>File format:</strong> <code>.agent.md</code> (markdown with YAML frontmatter)<br>
+        <strong>Global:</strong> <code>~/.copilot/agents/*.agent.md</code><br>
+        <strong>Project:</strong> <code>.copilot/agents/*.agent.md</code><br>
+        <strong>How it works:</strong> Invoked by name (e.g. <code>@partner-briefing</code>). The model becomes that persona.
+      </div>
+    </div>
+    <div class="model-card" onclick="this.classList.toggle('expanded')">
+      <span class="eq">Skills =</span> <strong>KNOWLEDGE</strong><br>
+      <span style="color:var(--text-dim)">Auto-triggered bundles with docs, templates, scripts.</span>
+      <span class="learn-more">Learn more ↓</span>
+      <div class="card-details">
+        <strong>File format:</strong> <code>SKILL.md</code> + <code>references/</code> + <code>scripts/</code><br>
+        <strong>Global:</strong> <code>~/.copilot/skills/*/SKILL.md</code><br>
+        <strong>Project:</strong> <code>.copilot/skills/*/SKILL.md</code><br>
+        <strong>How it works:</strong> Auto-triggered by description match. Loads docs and scripts into context.
+      </div>
+    </div>
+    <div class="model-card" onclick="this.classList.toggle('expanded')">
+      <span class="eq">MCP Servers =</span> <strong>CAPABILITIES</strong><br>
+      <span style="color:var(--text-dim)">External APIs exposed as callable tools.</span>
+      <span class="learn-more">Learn more ↓</span>
+      <div class="card-details">
+        <strong>Config:</strong> JSON in <code>mcp-config.json</code> or <code>.mcp.json</code><br>
+        <strong>Global:</strong> <code>~/.copilot/mcp-config.json</code><br>
+        <strong>Project:</strong> <code>.copilot/mcp-config.json</code> or <code>.mcp.json</code><br>
+        <strong>How it works:</strong> Each server exposes tools over Model Context Protocol. Runs as separate processes.
+      </div>
+    </div>
+    <div class="model-card" onclick="this.classList.toggle('expanded')">
+      <span class="eq">Extensions =</span> <strong>CODE</strong><br>
+      <span style="color:var(--text-dim)">JavaScript hooks that intercept and transform prompts.</span>
+      <span class="learn-more">Learn more ↓</span>
+      <div class="card-details">
+        <strong>File format:</strong> <code>extension.mjs</code> (ES module)<br>
+        <strong>Global:</strong> <code>~/.copilot/extensions/*/extension.mjs</code><br>
+        <strong>Project:</strong> <code>.github/extensions/*/extension.mjs</code><br>
+        <strong>How it works:</strong> Runs inside CLI process. Can modify prompts, register tools, process responses.
+      </div>
+    </div>
+    <div class="model-card" onclick="this.classList.toggle('expanded')">
+      <span class="eq">Plugins =</span> <strong>BUNDLES</strong><br>
+      <span style="color:var(--text-dim)">Installable packages from GitHub repos.</span>
+      <span class="learn-more">Learn more ↓</span>
+      <div class="card-details">
+        <strong>Install:</strong> <code>/plugin install owner/repo</code><br>
+        <strong>Location:</strong> <code>~/.copilot/installed-plugins/</code><br>
+        <strong>How it works:</strong> A plugin bundles agents, skills, and tools. All contents available in every session.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Scoping -->
+<div class="explainer">
+  <h2>Scoping — what loads where</h2>
+  <div class="scope-diagram">
+    <div class="scope-box global-box">
+      <h3 style="color:var(--blue)">🌍 Global</h3>
+      <p>Loads in <strong>every</strong> Copilot CLI session, regardless of cwd.</p>
+      <p style="margin-top:6px"><code>~/.copilot/</code></p>
+      <ul>
+        <li>Instructions & voice profile</li>
+        <li>Custom agents</li>
+        <li>Global skills</li>
+        <li>All installed plugins</li>
+        <li>All MCP servers & extensions</li>
+      </ul>
+    </div>
+    <div class="scope-box project-box">
+      <h3 style="color:var(--green)">📁 Project</h3>
+      <p>Loads <strong>only</strong> when Copilot starts in that repo folder.</p>
+      <p style="margin-top:6px"><code>.copilot/</code> <code>.github/</code></p>
+      <ul>
+        <li>Project instructions & conventions</li>
+        <li>Project agents & skills</li>
+        <li>Per-repo MCP servers</li>
+        <li>Project extensions</li>
+        <li>Squad config (if present)</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     DYNAMIC SECTIONS — Rendered from ENV_DATA by JavaScript
+     ============================================================ -->
+<div class="filter-bar" id="filter-bar"></div>
+<div id="dynamic-sections"></div>
+
+<footer id="footer">
+  Snapshot of current environment. Run <code>/env</code> in Copilot CLI to see what's loaded in your session.
+</footer>
+
+<script>
+// ============================================================
+// RENDERER — Turns ENV_DATA into the dashboard
+// ============================================================
+
+const SCOPE_COLORS = {
+  global: 'blue', plugin: 'purple', system: 'text-dim', project: 'green'
+};
+
+function scopeBadge(scope) {
+  const cls = `scope-${scope}`;
+  return `<span class="item-scope ${cls}">${scope}</span>`;
+}
+
+function renderStats() {
+  const d = ENV_DATA;
+  if (!d || !d.instructions) return;
+  const counts = [
+    { n: d.instructions.length, label: 'Instructions', color: 'blue', target: 'sec-instructions' },
+    { n: d.agents.length, label: 'Agents', color: 'green', target: 'sec-agents' },
+    { n: d.skills.length, label: 'Skills', color: 'purple', target: 'sec-skills' },
+    { n: d.mcpServers.length, label: 'MCP Servers', color: 'orange', target: 'sec-mcp' },
+    { n: d.extensions.length, label: 'Extensions', color: 'cyan', target: 'sec-extensions' },
+    { n: d.plugins.length, label: 'Plugins', color: 'red', target: 'sec-plugins' },
+  ];
+  if (d.projects && d.projects.length) counts.push({ n: d.projects.length, label: 'Projects', color: 'text-dim', target: 'sec-projects' });
+  if (d.lspServers && d.lspServers.length) counts.push({ n: d.lspServers.length, label: 'LSP Servers', color: 'text-dim', target: 'sec-lsp' });
+
+  document.getElementById('stats-bar').innerHTML = counts.map(c =>
+    `<a href="#${c.target}" class="stat"><span class="stat-number" style="color:var(--${c.color})">${c.n}</span><span class="stat-label">${c.label}</span></a>`
+  ).join('');
+}
+
+function renderMeta() {
+  const m = ENV_DATA.meta;
+  if (!m) return;
+  const parts = [];
+  if (m.platform) parts.push(`🖥️ ${m.platform}`);
+  if (m.cliVersion) parts.push(`📦 CLI ${m.cliVersion}`);
+  if (m.currentModel) parts.push(`🧠 ${m.currentModel}`);
+  if (m.experimentalMode) parts.push('🧪 Experimental');
+  if (m.generatedAt) parts.push(`📅 ${new Date(m.generatedAt).toLocaleDateString()}`);
+  document.getElementById('meta-bar').innerHTML = parts.map(p => `<span>${p}</span>`).join('');
+}
+
+function groupBySource(items) {
+  const groups = {};
+  items.forEach(item => {
+    const key = item.source || (item.scope === 'system' ? 'System — built-in' : item.scope === 'global' ? 'Global — your custom' : 'Project');
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(item);
+  });
+  return groups;
+}
+
+function renderLayer(id, icon, title, desc, items, scopeField) {
+  if (!items || !items.length) return '';
+  const groups = groupBySource(items);
+  let itemsHtml = '';
+  for (const [group, groupItems] of Object.entries(groups)) {
+    itemsHtml += `<div class="subgroup">${group}</div>`;
+    groupItems.forEach(item => {
+      const scope = item[scopeField || 'scope'] || 'global';
+      itemsHtml += `
+        <div class="item" data-scope="${scope}">
+          ${scopeBadge(scope)}
+          <div>
+            <div class="item-name">${item.name}</div>
+            <div class="item-desc">${item.desc || ''}</div>
+          </div>
+        </div>`;
+    });
+  }
+  return `
+    <div class="layer" data-layer="${id}" id="sec-${id}">
+      <div class="layer-header" onclick="this.closest('.layer').classList.toggle('open')">
+        <span class="layer-icon">${icon}</span>
+        <span class="layer-title">${title}</span>
+        <span class="layer-count">${items.length}</span>
+        <span class="layer-chevron">▶</span>
+      </div>
+      <p class="layer-desc">${desc}</p>
+      <div class="layer-items">${itemsHtml}</div>
+    </div>`;
+}
+
+function renderProjects() {
+  const projects = ENV_DATA.projects;
+  if (!projects || !projects.length) return '';
+  let html = projects.map(p => {
+    const badges = [];
+    if (p.agents) badges.push(`<span class="pbadge pbadge-agent">${p.agents} agent${p.agents > 1 ? 's' : ''}</span>`);
+    if (p.skills) badges.push(`<span class="pbadge pbadge-skill">${p.skills} skill${p.skills > 1 ? 's' : ''}</span>`);
+    if (p.mcp) badges.push(`<span class="pbadge pbadge-mcp">${p.mcp} MCP</span>`);
+    if (p.hasSquad) badges.push(`<span class="pbadge pbadge-squad">Squad</span>`);
+    const details = [];
+    if (p.hasInstructions) details.push('📄 Has project instructions');
+    if (p.remoteUrl) details.push(`🔗 <a href="${p.remoteUrl}" target="_blank" style="color:var(--blue);text-decoration:none;">${p.remoteUrl.replace('https://github.com/','')}</a>`);
+    return `
+      <div class="project-card">
+        <div class="project-header" onclick="this.parentElement.classList.toggle('expanded')">
+          <span class="project-name">${p.name}</span>
+          <span class="project-badges">${badges.join('')}</span>
+          <span class="project-toggle">+</span>
+        </div>
+        ${p.desc ? `<div class="project-desc">${p.desc}</div>` : ''}
+        ${details.length ? `<div class="project-details">${details.map(d => `<div style="padding:3px 0;color:var(--text-dim);">${d}</div>`).join('')}</div>` : ''}
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="layer open" data-layer="projects" id="sec-projects">
+      <div class="layer-header" onclick="this.closest('.layer').classList.toggle('open')">
+        <span class="layer-icon">📂</span>
+        <span class="layer-title">Projects</span>
+        <span class="layer-count">${projects.length}</span>
+        <span class="layer-chevron">▶</span>
+      </div>
+      <p class="layer-desc">Repos with Copilot configs. Project-level items only load when CLI starts in that folder.</p>
+      <div class="layer-items">${html}</div>
+    </div>`;
+}
+
+function renderFilterBar() {
+  document.getElementById('filter-bar').innerHTML = `
+    <button class="filter-btn active" onclick="filterScope('all',this)">All</button>
+    <button class="filter-btn" onclick="filterScope('global',this)">Global</button>
+    <button class="filter-btn" onclick="filterScope('plugin',this)">Plugin</button>
+    <button class="filter-btn" onclick="filterScope('system',this)">System</button>
+  `;
+}
+
+function filterScope(scope, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  document.querySelectorAll('.item').forEach(item => {
+    item.style.display = (scope === 'all' || item.dataset.scope === scope) ? '' : 'none';
+  });
+  document.querySelectorAll('.subgroup').forEach(sg => {
+    let next = sg.nextElementSibling;
+    let hasVisible = false;
+    while (next && !next.classList.contains('subgroup')) {
+      if (next.classList.contains('item') && next.style.display !== 'none') hasVisible = true;
+      next = next.nextElementSibling;
+    }
+    sg.style.display = hasVisible ? '' : 'none';
+  });
+}
+
+function render() {
+  if (!ENV_DATA || !ENV_DATA.meta) {
+    document.getElementById('dynamic-sections').innerHTML = `
+      <div class="explainer" style="text-align:center; padding:48px;">
+        <h2>No environment data loaded</h2>
+        <p style="color:var(--text-dim); margin-top:8px;">
+          This template needs to be populated by the <strong>copilot-overview</strong> skill.<br>
+          In Copilot CLI, say: <code style="color:var(--orange); background:rgba(210,153,34,0.1); padding:2px 8px; border-radius:4px;">generate my copilot overview</code>
+        </p>
+      </div>`;
+    return;
+  }
+
+  renderMeta();
+  renderStats();
+  renderFilterBar();
+
+  const sections = [];
+  sections.push(renderProjects());
+  sections.push(renderLayer('instructions', '📄', 'Instructions', 'Markdown files that define personality, rules, and behavior.', ENV_DATA.instructions));
+  sections.push(renderLayer('agents', '🎭', 'Agents', 'Specialized personas invoked by name.', ENV_DATA.agents));
+  sections.push(renderLayer('skills', '🧠', 'Skills', 'Knowledge packs that auto-trigger based on what you ask.', ENV_DATA.skills));
+  sections.push(renderLayer('mcp', '🔌', 'MCP Servers', 'External APIs exposed as tools the model can call.', ENV_DATA.mcpServers));
+  sections.push(renderLayer('extensions', '⚙️', 'Extensions', 'JavaScript code running inside the CLI process.', ENV_DATA.extensions));
+  if (ENV_DATA.lspServers && ENV_DATA.lspServers.length) {
+    sections.push(renderLayer('lsp', '🔤', 'LSP Servers', 'Language servers for code intelligence.', ENV_DATA.lspServers));
+  }
+  sections.push(renderLayer('plugins', '📦', 'Plugins', 'Installable packages from GitHub repos.', ENV_DATA.plugins));
+
+  document.getElementById('dynamic-sections').innerHTML = sections.join('');
+
+  const m = ENV_DATA.meta;
+  document.getElementById('footer').innerHTML = `Snapshot of current environment. Run <code>/env</code> in Copilot CLI to see what's loaded.<br>Generated: ${m.generatedAt ? new Date(m.generatedAt).toLocaleString() : 'unknown'}`;
+}
+
+render();
+</script>
+</body>
+</html>

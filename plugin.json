@@ -1,0 +1,10 @@
+{
+  "name": "copilot-overview",
+  "description": "Generate a personalized, interactive HTML dashboard showing your complete Copilot CLI environment — instructions, agents, skills, MCP servers, extensions, plugins, and projects.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Johan Wallquist",
+    "email": "jwallquist@microsoft.com"
+  },
+  "keywords": ["copilot", "cli", "overview", "dashboard", "environment", "inventory", "setup"]
+}
