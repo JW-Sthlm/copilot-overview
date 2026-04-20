@@ -46,6 +46,26 @@ generate my copilot overview
 
 Or: `show my copilot setup`, `copilot inventory`, `environment report`
 
+### Projects view (v2)
+
+Ask for a status digest across your project folders:
+
+```
+what have I been working on
+```
+
+Or: `project status`, `generate project overview`
+
+The skill scans `~/projects` and `~/work` (configurable via `.overviewignore`), joins data from Copilot session history, git, and `plan.md` files, and renders a second tab with:
+
+- **TLDR + status** per project (in_progress / done / abandoned / not_started)
+- **Last action** and **next steps** picked up from the most recent session checkpoint
+- **Smart suggestion** — the model's one-line recommendation for what to pick up next
+- **Open in Copilot CLI** button — generates a shortcut that `cd`'s into the project and launches the CLI
+
+To exclude a folder, drop a `.overviewignore` file next to it (gitignore-style patterns).
+To refresh a single project, say `refresh project <name>`.
+
 ## Privacy
 
 **Safe by default.** The skill instructs the model to:

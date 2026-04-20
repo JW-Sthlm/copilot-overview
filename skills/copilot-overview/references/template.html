@@ -140,22 +140,147 @@
     .item { flex-direction:column; gap:4px; }
     .item-name { min-width:auto; }
   }
+
+  /* ============================================================
+     TABS (Environment | Projects)
+     ============================================================ */
+  .tab-bar {
+    display:flex; gap:4px; margin-bottom:24px;
+    border-bottom:1px solid var(--border);
+  }
+  .tab-btn {
+    background:transparent; border:none; color:var(--text-dim);
+    padding:10px 18px; cursor:pointer; font-size:0.9rem; font-weight:500;
+    border-bottom:2px solid transparent; transition:all 0.15s;
+    font-family:inherit;
+  }
+  .tab-btn:hover { color:var(--text); }
+  .tab-btn.active { color:var(--text-bright); border-bottom-color:var(--blue); }
+  .view { display:none; }
+  .view.active { display:block; }
+
+  /* Project cards (Projects tab) */
+  .pv-header {
+    display:flex; align-items:center; gap:12px; margin-bottom:16px; flex-wrap:wrap;
+  }
+  .pv-header h2 { color:var(--text-bright); font-size:1.1rem; margin:0; }
+  .pv-status-filters { display:flex; gap:6px; flex-wrap:wrap; }
+  .pv-refresh-all {
+    background:var(--surface); border:1px solid var(--border); color:var(--text);
+    padding:6px 14px; border-radius:6px; cursor:pointer; font-size:0.8rem;
+    margin-left:auto; font-family:inherit;
+  }
+  .pv-refresh-all:hover { border-color:var(--blue); color:var(--blue); }
+
+  .pv-grid {
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(340px, 1fr));
+    gap:14px;
+  }
+  .pv-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius); padding:16px; display:flex; flex-direction:column;
+    transition:border-color 0.15s;
+  }
+  .pv-card:hover { border-color:var(--border); }
+  .pv-card.status-in_progress { border-left:3px solid var(--green); }
+  .pv-card.status-done { border-left:3px solid var(--blue); }
+  .pv-card.status-abandoned { border-left:3px solid var(--red); opacity:0.75; }
+  .pv-card.status-not_started { border-left:3px solid var(--text-dim); }
+
+  .pv-card-head {
+    display:flex; align-items:flex-start; gap:8px; margin-bottom:8px;
+  }
+  .pv-name {
+    font-weight:600; color:var(--text-bright); font-size:1rem;
+    font-family:'SFMono-Regular',Consolas,monospace;
+    flex:1; word-break:break-all;
+  }
+  .pv-badge {
+    font-size:0.65rem; padding:3px 8px; border-radius:10px; font-weight:600;
+    text-transform:uppercase; letter-spacing:0.4px; white-space:nowrap;
+  }
+  .pv-badge.status-in_progress { background:rgba(63,185,80,0.15); color:var(--green); }
+  .pv-badge.status-done { background:rgba(88,166,255,0.15); color:var(--blue); }
+  .pv-badge.status-abandoned { background:rgba(248,81,73,0.15); color:var(--red); }
+  .pv-badge.status-not_started { background:rgba(139,148,158,0.15); color:var(--text-dim); }
+
+  .pv-meta { font-size:0.75rem; color:var(--text-dim); margin-bottom:10px; }
+  .pv-meta a { color:var(--blue); text-decoration:none; }
+  .pv-meta a:hover { text-decoration:underline; }
+  .pv-tldr {
+    font-size:0.88rem; color:var(--text); margin-bottom:10px; line-height:1.55;
+  }
+  .pv-section-label {
+    font-size:0.68rem; color:var(--text-dim); text-transform:uppercase;
+    letter-spacing:0.5px; margin:8px 0 4px; font-weight:600;
+  }
+  .pv-last-action { font-size:0.82rem; color:var(--text-dim); margin-bottom:8px; }
+  .pv-next-steps { font-size:0.82rem; color:var(--text); margin:0 0 8px 18px; padding:0; }
+  .pv-next-steps li { margin-bottom:3px; }
+  .pv-suggestion {
+    background:rgba(210,153,34,0.08); border-left:2px solid var(--orange);
+    padding:8px 12px; border-radius:4px; font-size:0.82rem;
+    color:var(--text); margin:10px 0; line-height:1.5;
+  }
+  .pv-suggestion::before { content:"💡 "; }
+  .pv-actions {
+    display:flex; gap:8px; margin-top:auto; padding-top:12px;
+    border-top:1px solid var(--border);
+  }
+  .pv-btn {
+    background:transparent; border:1px solid var(--border); color:var(--text);
+    padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.78rem;
+    font-family:inherit; text-decoration:none; display:inline-flex; align-items:center; gap:4px;
+    transition:all 0.15s;
+  }
+  .pv-btn:hover { border-color:var(--blue); color:var(--blue); }
+  .pv-btn.primary { background:rgba(88,166,255,0.1); border-color:rgba(88,166,255,0.3); color:var(--blue); }
+  .pv-btn.primary:hover { background:rgba(88,166,255,0.2); }
+
+  .pv-empty {
+    text-align:center; padding:60px 20px; color:var(--text-dim);
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+  }
+  .pv-empty code { color:var(--orange); background:rgba(210,153,34,0.1); padding:2px 6px; border-radius:4px; }
+
+  .pv-toast {
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+    background:var(--surface); border:1px solid var(--green); color:var(--text);
+    padding:10px 18px; border-radius:var(--radius); font-size:0.85rem;
+    box-shadow:0 4px 16px rgba(0,0,0,0.5); opacity:0; transition:opacity 0.2s;
+    pointer-events:none; z-index:100;
+  }
+  .pv-toast.show { opacity:1; }
 </style>
 </head>
 <body>
 
 <!-- ============================================================
-     DATA PAYLOAD — The model fills this object after introspection.
+     DATA PAYLOAD — The model fills these after introspection.
      Everything below renders from this data. No hardcoded items.
      ============================================================ -->
 <script>
-// SKILL-GENERATED: Replace this empty object with the populated ENV_DATA
+// SKILL-GENERATED: Replace these empty objects with populated data.
 const ENV_DATA = {};
+const PROJECT_DATA = { projects: [] };
+// "full" shows both tabs; "projects_only" hides Environment (for standalone projects.html)
+const RENDER_MODE = "full";
 </script>
 
 <h1>⚡ Copilot CLI Overview</h1>
 <p class="subtitle" id="subtitle">Your Copilot CLI environment at a glance</p>
 <div class="meta-bar" id="meta-bar"></div>
+
+<!-- Tab bar -->
+<div class="tab-bar" id="tab-bar">
+  <button class="tab-btn active" data-view="environment" onclick="switchView('environment')">🧩 Environment</button>
+  <button class="tab-btn" data-view="projects" onclick="switchView('projects')">📂 Projects</button>
+</div>
+
+<!-- ============================================================
+     ENVIRONMENT VIEW — existing content
+     ============================================================ -->
+<div class="view active" id="view-environment">
 
 <!-- Stats bar -->
 <div class="stats" id="stats-bar"></div>
@@ -367,6 +492,22 @@ const ENV_DATA = {};
 <div class="filter-bar" id="filter-bar"></div>
 <div id="dynamic-sections"></div>
 
+</div> <!-- /view-environment -->
+
+<!-- ============================================================
+     PROJECTS VIEW — Rendered from PROJECT_DATA by JavaScript
+     ============================================================ -->
+<div class="view" id="view-projects">
+  <div class="pv-header">
+    <h2>Project status</h2>
+    <div class="pv-status-filters" id="pv-status-filters"></div>
+    <button class="pv-refresh-all" onclick="copyToClipboard('refresh project status', 'Paste in Copilot CLI to refresh all projects')">🔄 Refresh all</button>
+  </div>
+  <div id="pv-content"></div>
+</div>
+
+<div class="pv-toast" id="pv-toast"></div>
+
 <footer id="footer">
   Snapshot of current environment. Run <code>/env</code> in Copilot CLI to see what's loaded in your session.
 </footer>
@@ -556,6 +697,191 @@ function render() {
 }
 
 render();
+
+// ============================================================
+// PROJECTS VIEW RENDERER
+// ============================================================
+
+const STATUS_LABELS = {
+  in_progress: 'In Progress',
+  done: 'Done',
+  abandoned: 'Abandoned',
+  not_started: 'Not Started'
+};
+
+function fmtRelative(iso) {
+  if (!iso) return 'never';
+  const now = Date.now();
+  const then = new Date(iso).getTime();
+  const diff = now - then;
+  const days = Math.floor(diff / 86400000);
+  if (days < 1) return 'today';
+  if (days === 1) return 'yesterday';
+  if (days < 7) return `${days} days ago`;
+  if (days < 30) return `${Math.floor(days/7)} week${Math.floor(days/7)>1?'s':''} ago`;
+  if (days < 365) return `${Math.floor(days/30)} month${Math.floor(days/30)>1?'s':''} ago`;
+  return `${Math.floor(days/365)} year${Math.floor(days/365)>1?'s':''} ago`;
+}
+
+function showToast(msg) {
+  const t = document.getElementById('pv-toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function copyToClipboard(text, toastMsg) {
+  const fallback = () => {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch {}
+    document.body.removeChild(ta);
+  };
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(text).catch(fallback);
+  } else {
+    fallback();
+  }
+  showToast(toastMsg || `Copied: ${text}`);
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
+function renderProjectCard(p) {
+  const status = p.status || 'in_progress';
+  const statusLabel = STATUS_LABELS[status] || status;
+  const metaParts = [];
+  if (p.last_activity_at) metaParts.push(`Last activity ${fmtRelative(p.last_activity_at)}`);
+  if (p.branch) metaParts.push(`<code style="color:var(--orange);font-size:0.72rem;">${escapeHtml(p.branch)}</code>`);
+  if (p.uncommitted_count > 0) metaParts.push(`<span style="color:var(--orange)">⚠ ${p.uncommitted_count} uncommitted</span>`);
+  if (p.repository) {
+    const repoShort = p.repository.replace('https://github.com/','');
+    metaParts.push(`<a href="${escapeHtml(p.repository)}" target="_blank">🔗 ${escapeHtml(repoShort)}</a>`);
+  }
+
+  const nextStepsHtml = (p.next_steps && p.next_steps.length)
+    ? `<div class="pv-section-label">Next steps</div><ul class="pv-next-steps">${p.next_steps.slice(0,3).map(s => `<li>${escapeHtml(s)}</li>`).join('')}</ul>`
+    : '';
+
+  const suggestionHtml = p.smart_suggestion
+    ? `<div class="pv-suggestion">${escapeHtml(p.smart_suggestion)}</div>`
+    : '';
+
+  const lastActionHtml = p.last_action
+    ? `<div class="pv-section-label">Last action</div><div class="pv-last-action">${escapeHtml(p.last_action)}</div>`
+    : '';
+
+  const refreshPrompt = p.refresh_prompt || `refresh project ${p.name}`;
+  const shortcutBtn = p.shortcut_path
+    ? `<a class="pv-btn primary" href="${escapeHtml(p.shortcut_path)}" title="Open Copilot CLI in this project">⚡ Open in Copilot CLI</a>`
+    : `<button class="pv-btn primary" onclick="copyToClipboard('cd &quot;${escapeHtml(p.path)}&quot; &amp;&amp; copilot', 'Copied cd command')">⚡ Copy cd command</button>`;
+
+  return `
+    <div class="pv-card status-${status}" data-status="${status}">
+      <div class="pv-card-head">
+        <span class="pv-name">${escapeHtml(p.name)}</span>
+        <span class="pv-badge status-${status}">${statusLabel}</span>
+      </div>
+      <div class="pv-meta">${metaParts.join(' · ')}</div>
+      ${p.tldr ? `<div class="pv-tldr">${escapeHtml(p.tldr)}</div>` : ''}
+      ${lastActionHtml}
+      ${nextStepsHtml}
+      ${suggestionHtml}
+      <div class="pv-actions">
+        ${shortcutBtn}
+        <button class="pv-btn" onclick="copyToClipboard('${escapeHtml(refreshPrompt)}', 'Paste in Copilot CLI to refresh')">🔄 Refresh</button>
+        <span style="flex:1"></span>
+        <span style="font-size:0.7rem;color:var(--text-dim);align-self:center;">${escapeHtml(p.path || '')}</span>
+      </div>
+    </div>`;
+}
+
+function renderStatusFilters() {
+  const counts = { all: 0, in_progress: 0, done: 0, abandoned: 0, not_started: 0 };
+  (PROJECT_DATA.projects || []).forEach(p => {
+    counts.all++;
+    if (counts[p.status] !== undefined) counts[p.status]++;
+  });
+  const filters = [
+    ['all', 'All'],
+    ['in_progress', 'In Progress'],
+    ['done', 'Done'],
+    ['abandoned', 'Abandoned'],
+    ['not_started', 'Not Started']
+  ];
+  document.getElementById('pv-status-filters').innerHTML = filters
+    .filter(([k]) => k === 'all' || counts[k] > 0)
+    .map(([k, label], i) =>
+      `<button class="filter-btn ${i === 0 ? 'active' : ''}" onclick="filterProjects('${k}',this)">${label} · ${counts[k]}</button>`
+    ).join('');
+}
+
+function filterProjects(status, btn) {
+  document.querySelectorAll('#pv-status-filters .filter-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  document.querySelectorAll('.pv-card').forEach(card => {
+    card.style.display = (status === 'all' || card.dataset.status === status) ? '' : 'none';
+  });
+}
+
+function renderProjectsView() {
+  const projects = (PROJECT_DATA && PROJECT_DATA.projects) || [];
+  const container = document.getElementById('pv-content');
+  if (!container) return;
+
+  if (!projects.length) {
+    container.innerHTML = `
+      <div class="pv-empty">
+        <p style="margin-bottom:12px;">No projects found.</p>
+        <p style="font-size:0.85rem;">Ask Copilot CLI: <code>generate project status for ~/projects,~/work</code></p>
+      </div>`;
+    return;
+  }
+
+  renderStatusFilters();
+  // Sort: in_progress first, then by last_activity_at desc
+  const statusOrder = { in_progress: 0, done: 1, not_started: 2, abandoned: 3 };
+  const sorted = [...projects].sort((a, b) => {
+    const so = (statusOrder[a.status] ?? 9) - (statusOrder[b.status] ?? 9);
+    if (so !== 0) return so;
+    return (b.last_activity_at || '').localeCompare(a.last_activity_at || '');
+  });
+  container.innerHTML = `<div class="pv-grid">${sorted.map(renderProjectCard).join('')}</div>`;
+}
+
+function switchView(view) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + view));
+}
+
+// Apply RENDER_MODE
+function applyRenderMode() {
+  if (typeof RENDER_MODE !== 'undefined' && RENDER_MODE === 'projects_only') {
+    const envTab = document.querySelector('.tab-btn[data-view="environment"]');
+    if (envTab) envTab.style.display = 'none';
+    switchView('projects');
+    // Hide the env sections entirely
+    const envView = document.getElementById('view-environment');
+    if (envView) envView.remove();
+    document.getElementById('subtitle').textContent = 'What have I been working on';
+  } else {
+    // Hide projects tab if no project data provided
+    const hasProjects = PROJECT_DATA && PROJECT_DATA.projects && PROJECT_DATA.projects.length;
+    if (!hasProjects) {
+      const projTab = document.querySelector('.tab-btn[data-view="projects"]');
+      if (projTab) projTab.style.display = 'none';
+    }
+  }
+}
+
+renderProjectsView();
+applyRenderMode();
 </script>
 </body>
 </html>

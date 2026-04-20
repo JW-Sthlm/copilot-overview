@@ -1,7 +1,12 @@
 import { joinSession } from "@github/copilot-sdk/extension";
 import { readdir, readFile, stat, access } from "node:fs/promises";
-import { join, basename, resolve } from "node:path";
+import { join, basename, resolve, sep } from "node:path";
 import { homedir, platform } from "node:os";
+import { createHash } from "node:crypto";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
+
+const execFileP = promisify(execFile);
 
 const HOME = homedir();
 const COPILOT_DIR = join(HOME, ".copilot");
@@ -336,6 +341,169 @@ async function discoverProjects(scanRoots) {
 }
 
 // ============================================================
+// Project status discovery (for Projects tab)
+// ============================================================
+
+// Parse .overviewignore (gitignore-style). Returns array of regex patterns.
+async function loadOverviewIgnore(root) {
+  const text = await safeReadText(join(root, ".overviewignore"));
+  if (!text) return [];
+  return text.split("\n")
+    .map(l => l.trim())
+    .filter(l => l && !l.startsWith("#"))
+    .map(pattern => {
+      // Convert simple glob to regex: * -> [^/]*, ? -> [^/]
+      const escaped = pattern.replace(/[.+^${}()|[\]\\]/g, "\\$&");
+      const rx = escaped.replace(/\*/g, "[^/]*").replace(/\?/g, "[^/]");
+      return new RegExp(`^${rx}$`);
+    });
+}
+
+function isIgnored(name, patterns) {
+  return patterns.some(rx => rx.test(name));
+}
+
+async function runGit(cwd, args) {
+  try {
+    const { stdout } = await execFileP("git", args, { cwd, timeout: 5000, windowsHide: true });
+    return stdout.trim();
+  } catch {
+    return null;
+  }
+}
+
+async function getGitInfo(projDir) {
+  const hasGit = await exists(join(projDir, ".git"));
+  if (!hasGit) return { has_git: false };
+
+  const [remote, branch, lastCommitIso, lastCommitSubject, uncommitted, commitCount30d] = await Promise.all([
+    runGit(projDir, ["config", "--get", "remote.origin.url"]),
+    runGit(projDir, ["rev-parse", "--abbrev-ref", "HEAD"]),
+    runGit(projDir, ["log", "-1", "--format=%cI"]),
+    runGit(projDir, ["log", "-1", "--format=%s"]),
+    runGit(projDir, ["status", "--porcelain"]),
+    runGit(projDir, ["rev-list", "--count", "--since=30.days", "HEAD"])
+  ]);
+
+  const remoteUrl = remote
+    ? remote.replace(/\.git$/, "").replace(/^git@github\.com:/, "https://github.com/")
+    : null;
+
+  return {
+    has_git: true,
+    remote_url: remoteUrl,
+    branch: branch || null,
+    last_commit_at: lastCommitIso || null,
+    last_commit_subject: lastCommitSubject || null,
+    uncommitted_count: uncommitted ? uncommitted.split("\n").filter(Boolean).length : 0,
+    commits_last_30d: commitCount30d ? parseInt(commitCount30d, 10) : 0
+  };
+}
+
+// Collect first plan.md found under project/.copilot/session-state/*/plan.md
+async function getProjectPlanMd(projDir) {
+  const sessionStateDir = join(projDir, ".copilot", "session-state");
+  if (!(await isDir(sessionStateDir))) return null;
+
+  let newest = null;
+  for (const sid of await listDir(sessionStateDir)) {
+    const pmd = join(sessionStateDir, sid, "plan.md");
+    try {
+      const s = await stat(pmd);
+      if (!newest || s.mtimeMs > newest.mtime) {
+        newest = { path: pmd, mtime: s.mtimeMs };
+      }
+    } catch {}
+  }
+  if (!newest) return null;
+
+  const text = await safeReadText(newest.path);
+  if (!text) return null;
+  return {
+    path: redactPath(newest.path),
+    updated_at: new Date(newest.mtime).toISOString(),
+    content: text.length > 4000 ? text.slice(0, 4000) + "\n...[truncated]" : text
+  };
+}
+
+// Find the most recent file mtime anywhere in project (skipping node_modules, .git)
+async function getLastFileActivity(projDir) {
+  const SKIP = new Set(["node_modules", ".git", "dist", "build", ".next", "_output", "__pycache__"]);
+  let newest = 0;
+
+  async function walk(dir, depth) {
+    if (depth > 4) return;
+    let entries;
+    try { entries = await readdir(dir, { withFileTypes: true }); } catch { return; }
+    for (const ent of entries) {
+      if (SKIP.has(ent.name) || ent.name.startsWith(".")) continue;
+      const fp = join(dir, ent.name);
+      if (ent.isDirectory()) {
+        await walk(fp, depth + 1);
+      } else {
+        try {
+          const s = await stat(fp);
+          if (s.mtimeMs > newest) newest = s.mtimeMs;
+        } catch {}
+      }
+    }
+  }
+  await walk(projDir, 0);
+  return newest ? new Date(newest).toISOString() : null;
+}
+
+async function discoverProjectStatus(scanRoots) {
+  const results = [];
+
+  for (const root of scanRoots) {
+    if (!(await isDir(root))) continue;
+    const ignorePatterns = await loadOverviewIgnore(root);
+
+    for (const d of await listDir(root)) {
+      if (d.startsWith(".") || d.startsWith("_")) continue;
+      if (isIgnored(d, ignorePatterns)) continue;
+
+      const projDir = join(root, d);
+      if (!(await isDir(projDir))) continue;
+
+      const [gitInfo, planMd, lastFileAt] = await Promise.all([
+        getGitInfo(projDir),
+        getProjectPlanMd(projDir),
+        getLastFileActivity(projDir)
+      ]);
+
+      // Lightweight content hash for cache staleness detection
+      const hashInput = JSON.stringify({
+        git: gitInfo,
+        plan_updated: planMd?.updated_at,
+        last_file: lastFileAt
+      });
+      const rawHash = createHash("sha1").update(hashInput).digest("hex").slice(0, 16);
+
+      results.push({
+        name: d,
+        path: redactPath(projDir),
+        abs_path: projDir,
+        scan_root: redactPath(root),
+        ...gitInfo,
+        plan_md: planMd,
+        last_file_activity_at: lastFileAt,
+        raw_hash: rawHash
+      });
+    }
+  }
+
+  // Sort by activity (last commit or file mtime), newest first
+  results.sort((a, b) => {
+    const at = a.last_commit_at || a.last_file_activity_at || "";
+    const bt = b.last_commit_at || b.last_file_activity_at || "";
+    return bt.localeCompare(at);
+  });
+
+  return results;
+}
+
+// ============================================================
 // MAIN: Register the discovery tool
 // ============================================================
 
@@ -408,6 +576,36 @@ const session = await joinSession({
         };
 
         return JSON.stringify(envData, null, 2);
+      }
+    },
+    {
+      name: "discover_project_status",
+      description: "Discover per-project raw status data for the Projects view: git info (remote, branch, last commit, uncommitted changes), latest plan.md contents, and last file activity. Respects .overviewignore at each scan_root. Returns an array of project records. The model is expected to query session_store via the sql tool for checkpoint/turn data and synthesize TLDR + status on top of this raw data.",
+      parameters: {
+        type: "object",
+        properties: {
+          scan_roots: {
+            type: "string",
+            description: "Comma-separated absolute paths to scan for projects (e.g. ~/projects,~/work). Required."
+          }
+        },
+        required: ["scan_roots"]
+      },
+      handler: async (args) => {
+        if (!args.scan_roots) {
+          return JSON.stringify({ error: "scan_roots parameter is required" });
+        }
+        const scanRoots = args.scan_roots
+          .split(",")
+          .map(p => resolve(p.trim().replace(/^~/, HOME)));
+
+        const projects = await discoverProjectStatus(scanRoots);
+        return JSON.stringify({
+          generated_at: new Date().toISOString(),
+          scan_roots: scanRoots.map(redactPath),
+          project_count: projects.length,
+          projects
+        }, null, 2);
       }
     }
   ],
