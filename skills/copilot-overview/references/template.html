@@ -159,17 +159,29 @@
   .view { display:none; }
   .view.active { display:block; }
 
-  /* Dashboard freshness + update banners */
+  /* Dashboard freshness chip + refresh button + update banner */
   .dash-status {
-    display:flex; align-items:center; gap:8px;
-    font-size:0.78rem; color:var(--text-dim);
-    margin:-8px 0 16px 0;
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    font-size:0.82rem;
+    margin:-4px 0 20px 0;
   }
-  .dash-status.stale { color:#d7ba7d; }
-  .dash-status .dot {
-    width:6px; height:6px; border-radius:50%; background:#4ec9b0;
+  .dash-chip {
+    display:inline-flex; align-items:center; gap:6px;
+    padding:4px 10px; border-radius:999px;
+    background:rgba(78,201,176,0.12); color:#4ec9b0;
+    border:1px solid rgba(78,201,176,0.3);
+    font-weight:500;
   }
-  .dash-status.stale .dot { background:#d7ba7d; }
+  .dash-chip.warn { background:rgba(215,186,125,0.12); color:#d7ba7d; border-color:rgba(215,186,125,0.35); }
+  .dash-chip.stale { background:rgba(244,135,113,0.12); color:#f48771; border-color:rgba(244,135,113,0.35); }
+  .dash-chip .dot { width:6px; height:6px; border-radius:50%; background:currentColor; }
+  .dash-refresh {
+    background:transparent; border:1px solid var(--border);
+    color:var(--text-dim); padding:4px 10px; border-radius:999px;
+    cursor:pointer; font-size:0.78rem; font-family:inherit;
+    transition:all 0.15s;
+  }
+  .dash-refresh:hover { color:var(--text-bright); border-color:var(--blue); }
   .dash-update {
     background:linear-gradient(90deg, rgba(78,201,176,0.18), rgba(78,201,176,0.08));
     border:1px solid rgba(78,201,176,0.4);
@@ -926,7 +938,6 @@ applyRenderMode();
 // ============================================================
 (function dashboardLiveness() {
   const STATE_KEY = 'copilotOverviewState_v1';
-  const POLL_MS = 30000;
 
   // --- State restore (active tab, status filter) ---
   function restoreState() {
@@ -977,19 +988,37 @@ applyRenderMode();
     const el = document.getElementById('dash-status');
     if (!el) return;
     if (!DASHBOARD_GENERATED_AT || DASHBOARD_VERSION === '0') {
-      el.style.display = 'none';
+      el.innerHTML = `<button class="dash-refresh" onclick="copyRefreshPrompt()">🔄 Generate in Copilot CLI</button>`;
+      el.style.display = '';
       return;
     }
     const ageMs = Date.now() - new Date(DASHBOARD_GENERATED_AT).getTime();
-    const stale = ageMs > 24 * 3600 * 1000;
-    el.className = 'dash-status' + (stale ? ' stale' : '');
-    el.innerHTML = `<span class="dot"></span><span>Last updated ${fmtAgo(DASHBOARD_GENERATED_AT)}${stale ? ' — consider refreshing' : ''}</span>`;
+    const ageH = ageMs / 3600000;
+    let chipClass = 'dash-chip';
+    let hint = '';
+    if (ageH > 72) { chipClass += ' stale'; hint = ' · refresh recommended'; }
+    else if (ageH > 24) { chipClass += ' warn'; }
+    el.innerHTML = `
+      <span class="${chipClass}"><span class="dot"></span>Last updated ${fmtAgo(DASHBOARD_GENERATED_AT)}${hint}</span>
+      <button class="dash-refresh" onclick="copyRefreshPrompt()" title="Copy 'refresh overview' prompt to clipboard">🔄 Refresh</button>
+    `;
     el.style.display = '';
   }
 
-  // --- Poll data.js for version changes ---
+  window.copyRefreshPrompt = function() {
+    const prompt = 'refresh overview';
+    navigator.clipboard.writeText(prompt).then(() => {
+      if (typeof showToast === 'function') {
+        showToast('Copied — paste into Copilot CLI to refresh');
+      }
+    }).catch(() => {
+      alert('Paste this into your Copilot CLI:\n\n' + prompt);
+    });
+  };
+
+  // --- Check data.js for version changes ---
   // file:// blocks fetch(), but <script src> works. Re-load with cache-bust; compare version.
-  function pollForUpdates() {
+  function checkForUpdates() {
     const s = document.createElement('script');
     s.src = './data.js?t=' + Date.now();
     s.onload = () => {
@@ -997,10 +1026,8 @@ applyRenderMode();
       const newVer = (window.DASHBOARD && window.DASHBOARD.version) || '0';
       if (newVer !== DASHBOARD_VERSION && newVer !== '0') {
         if (document.hidden) {
-          // Tab not active — silent reload is safe
           location.reload();
         } else {
-          // Tab active — show banner, don't interrupt
           const b = document.getElementById('dash-update');
           if (b) b.style.display = '';
         }
@@ -1012,7 +1039,16 @@ applyRenderMode();
 
   restoreState();
   renderFreshness();
-  setInterval(pollForUpdates, POLL_MS);
+  // Check once on load (picks up changes made while tab was closed/inactive)
+  setTimeout(checkForUpdates, 2000);
+  // Check when the user returns to the tab
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) checkForUpdates();
+  });
+  // Safety net: also check once per 24h for tabs left open for days
+  setInterval(checkForUpdates, 24 * 3600 * 1000);
+  // Re-render the "Last updated Nh ago" chip every 15 min so it stays accurate
+  setInterval(renderFreshness, 15 * 60 * 1000);
 })();
 </script>
 </body>
