@@ -159,6 +159,27 @@
   .view { display:none; }
   .view.active { display:block; }
 
+  /* Dashboard freshness + update banners */
+  .dash-status {
+    display:flex; align-items:center; gap:8px;
+    font-size:0.78rem; color:var(--text-dim);
+    margin:-8px 0 16px 0;
+  }
+  .dash-status.stale { color:#d7ba7d; }
+  .dash-status .dot {
+    width:6px; height:6px; border-radius:50%; background:#4ec9b0;
+  }
+  .dash-status.stale .dot { background:#d7ba7d; }
+  .dash-update {
+    background:linear-gradient(90deg, rgba(78,201,176,0.18), rgba(78,201,176,0.08));
+    border:1px solid rgba(78,201,176,0.4);
+    color:#4ec9b0;
+    padding:10px 14px; border-radius:6px; margin-bottom:16px;
+    cursor:pointer; font-size:0.85rem; font-weight:500;
+    transition:background 0.15s;
+  }
+  .dash-update:hover { background:rgba(78,201,176,0.22); }
+
   /* Project cards (Projects tab) */
   .pv-header {
     display:flex; align-items:center; gap:12px; margin-bottom:16px; flex-wrap:wrap;
@@ -256,20 +277,37 @@
 <body>
 
 <!-- ============================================================
-     DATA PAYLOAD — The model fills these after introspection.
-     Everything below renders from this data. No hardcoded items.
+     DATA PAYLOAD — Loaded from external data.js (stable dashboard mode)
+     or inlined by the skill (legacy one-shot mode). Template looks for
+     window.DASHBOARD first, then falls back to the inline consts.
      ============================================================ -->
+<script src="./data.js" onerror="window.__noDataJs=true"></script>
 <script>
-// SKILL-GENERATED: Replace these empty objects with populated data.
-const ENV_DATA = {};
-const PROJECT_DATA = { projects: [] };
-// "full" shows both tabs; "projects_only" hides Environment (for standalone projects.html)
-const RENDER_MODE = "full";
+// Fallback inline payload — used when data.js is not present (one-shot / preview mode).
+// The skill either writes ./data.js next to this file OR replaces these inline consts.
+window.DASHBOARD = window.DASHBOARD || {
+  version: "0",
+  generated_at: null,
+  mode: "full",        // "full" | "projects_only" | "env_only"
+  env: {},
+  projects: []
+};
+const ENV_DATA = window.DASHBOARD.env || {};
+const PROJECT_DATA = { projects: window.DASHBOARD.projects || [] };
+const RENDER_MODE = window.DASHBOARD.mode || "full";
+const DASHBOARD_VERSION = window.DASHBOARD.version || "0";
+const DASHBOARD_GENERATED_AT = window.DASHBOARD.generated_at || null;
 </script>
 
 <h1>⚡ Copilot CLI Overview</h1>
 <p class="subtitle" id="subtitle">Your Copilot CLI environment at a glance</p>
 <div class="meta-bar" id="meta-bar"></div>
+
+<!-- Dashboard status strip: freshness + update banner -->
+<div id="dash-status" class="dash-status" style="display:none"></div>
+<div id="dash-update" class="dash-update" style="display:none" onclick="location.reload()">
+  <span>🔔 New data available — click to reload</span>
+</div>
 
 <!-- Tab bar -->
 <div class="tab-bar" id="tab-bar">
@@ -882,6 +920,100 @@ function applyRenderMode() {
 
 renderProjectsView();
 applyRenderMode();
+
+// ============================================================
+// DASHBOARD LIVENESS — staleness, polling, state preservation
+// ============================================================
+(function dashboardLiveness() {
+  const STATE_KEY = 'copilotOverviewState_v1';
+  const POLL_MS = 30000;
+
+  // --- State restore (active tab, status filter) ---
+  function restoreState() {
+    try {
+      const s = JSON.parse(sessionStorage.getItem(STATE_KEY) || '{}');
+      if (s.activeTab && document.querySelector(`.tab-btn[data-view="${s.activeTab}"]`)) {
+        switchView(s.activeTab);
+      }
+      if (s.statusFilter && typeof window.filterProjects === 'function') {
+        window.__pendingFilter = s.statusFilter;
+      }
+    } catch (e) {}
+  }
+  function saveState(patch) {
+    try {
+      const prev = JSON.parse(sessionStorage.getItem(STATE_KEY) || '{}');
+      sessionStorage.setItem(STATE_KEY, JSON.stringify({ ...prev, ...patch }));
+    } catch (e) {}
+  }
+  // Wrap switchView to persist
+  const _origSwitch = window.switchView;
+  window.switchView = function(view) {
+    _origSwitch(view);
+    saveState({ activeTab: view });
+  };
+  // Wrap filterProjects if present
+  if (typeof window.filterProjects === 'function') {
+    const _origFilter = window.filterProjects;
+    window.filterProjects = function(status) {
+      _origFilter(status);
+      saveState({ statusFilter: status });
+    };
+  }
+
+  // --- Freshness indicator ---
+  function fmtAgo(iso) {
+    if (!iso) return 'unknown';
+    const ms = Date.now() - new Date(iso).getTime();
+    const m = Math.floor(ms / 60000);
+    if (m < 1) return 'just now';
+    if (m < 60) return m + 'm ago';
+    const h = Math.floor(m / 60);
+    if (h < 24) return h + 'h ago';
+    const d = Math.floor(h / 24);
+    return d + 'd ago';
+  }
+  function renderFreshness() {
+    const el = document.getElementById('dash-status');
+    if (!el) return;
+    if (!DASHBOARD_GENERATED_AT || DASHBOARD_VERSION === '0') {
+      el.style.display = 'none';
+      return;
+    }
+    const ageMs = Date.now() - new Date(DASHBOARD_GENERATED_AT).getTime();
+    const stale = ageMs > 24 * 3600 * 1000;
+    el.className = 'dash-status' + (stale ? ' stale' : '');
+    el.innerHTML = `<span class="dot"></span><span>Last updated ${fmtAgo(DASHBOARD_GENERATED_AT)}${stale ? ' — consider refreshing' : ''}</span>`;
+    el.style.display = '';
+  }
+
+  // --- Poll data.js for version changes ---
+  // file:// blocks fetch(), but <script src> works. Re-load with cache-bust; compare version.
+  function pollForUpdates() {
+    const s = document.createElement('script');
+    s.src = './data.js?t=' + Date.now();
+    s.onload = () => {
+      s.remove();
+      const newVer = (window.DASHBOARD && window.DASHBOARD.version) || '0';
+      if (newVer !== DASHBOARD_VERSION && newVer !== '0') {
+        if (document.hidden) {
+          // Tab not active — silent reload is safe
+          location.reload();
+        } else {
+          // Tab active — show banner, don't interrupt
+          const b = document.getElementById('dash-update');
+          if (b) b.style.display = '';
+        }
+      }
+    };
+    s.onerror = () => s.remove();
+    document.head.appendChild(s);
+  }
+
+  restoreState();
+  renderFreshness();
+  setInterval(pollForUpdates, POLL_MS);
+})();
 </script>
 </body>
 </html>

@@ -38,33 +38,37 @@ Note: the discovery extension still needs to be copied to `~/.copilot/extensions
 
 ## Usage
 
-In any Copilot CLI session:
+The dashboard is a persistent browser tab you keep open. First run:
 
 ```
 generate my copilot overview
 ```
 
-Or: `show my copilot setup`, `copilot inventory`, `environment report`
+This creates `~/.copilot/overview/index.html` + `data.js` and opens it. **Bookmark the tab.**
 
-### Projects view (v2)
-
-Ask for a status digest across your project folders:
+To refresh:
 
 ```
-what have I been working on
+refresh overview
 ```
 
-Or: `project status`, `generate project overview`
+The skill asks what to refresh (environment / projects / both), rewrites `data.js`, and your open tab picks it up automatically — silent reload if the tab isn't focused, click-to-reload banner if it is. State (active tab, filter) is preserved across reloads.
 
-The skill scans `~/projects` and `~/work` (configurable via `.overviewignore`), joins data from Copilot session history, git, and `plan.md` files, and renders a second tab with:
+Trigger phrases: `generate my copilot overview`, `show my copilot setup`, `copilot inventory`, `environment report`, `refresh overview`.
 
-- **TLDR + status** per project (in_progress / done / abandoned / not_started)
-- **Last action** and **next steps** picked up from the most recent session checkpoint
-- **Smart suggestion** — the model's one-line recommendation for what to pick up next
-- **Open in Copilot CLI** button — generates a shortcut that `cd`'s into the project and launches the CLI
+### Projects view
 
-To exclude a folder, drop a `.overviewignore` file next to it (gitignore-style patterns).
-To refresh a single project, say `refresh project <name>`.
+The dashboard has two tabs: **Environment** and **Projects**. To populate or update only projects:
+
+```
+refresh projects
+```
+
+Or: `project status`, `what have I been working on`, `refresh project <name>`.
+
+Each project card shows status (in_progress / done / abandoned / not_started), TLDR, last action, next steps, a smart suggestion, and an "Open in Copilot CLI" shortcut.
+
+To exclude a folder from scanning, drop a `.overviewignore` file (gitignore syntax) in the scan root.
 
 ## Privacy
 
