@@ -15,9 +15,26 @@ Outputs a self-contained HTML dashboard with an interactive operating stack (M36
 
 ## Install
 
+**You're already in Copilot CLI — let it install itself.** Paste this prompt:
+
+> Install the copilot-overview extension from this repo:
+> https://github.com/JW-Sthlm/copilot-overview
+>
+> Clone it, copy the extension folder to `~/.copilot/extensions/copilot-overview/`,
+> copy the skill folder to `~/.copilot/skills/copilot-overview/`,
+> then reload extensions.
+
+See [INSTALL.md](./INSTALL.md) for details and troubleshooting.
+
+### Alternative: plugin install
+
+If/when GitHub's plugin marketplace is available:
+
 ```
 /plugin install JW-Sthlm/copilot-overview
 ```
+
+Note: the discovery extension still needs to be copied to `~/.copilot/extensions/` manually — plugins don't auto-install extensions yet.
 
 ## Usage
 
