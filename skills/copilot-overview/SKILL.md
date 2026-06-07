@@ -4,7 +4,13 @@ Generate a personalized, interactive HTML dashboard of your Copilot CLI environm
 
 ## Description
 
-Use this skill when the user asks to: generate copilot overview, show my copilot setup, create copilot dashboard, what do I have installed, map my copilot environment, copilot inventory, environment report, generate my setup page, what tools do I have.
+Use this skill when the user asks to: generate copilot overview, show my copilot setup, create copilot dashboard, what do I have installed, map my copilot environment, copilot inventory, environment report, generate my setup page, what tools do I have, refresh overview.
+
+The output is a single self-contained HTML page with: clickable layers of the operating stack (M365 → GitHub Copilot → CLI → Agency → Squad), a "How the layers connect" explainer plus a Skill / Agent / Extension comparison table, an "Anatomy of a request" diagram, a "Try this first" callout with starter prompts, an age banner showing snapshot freshness, a refresh button that copies `refresh overview` to the clipboard, and a collapsible "What's installed in your environment" section with the live inventory of instructions, agents, skills, MCP servers, extensions, plugins, and projects.
+
+## Template editing rule
+
+**Never edit the template inline in the generated output.** Always copy `references/template.html` to the user's output folder verbatim and only modify the `ENV_DATA` (and optional `PROJECT_DATA`) payload. If structural template changes are needed, edit `references/template.html` in this skill, then re-copy.
 
 ## How to generate
 

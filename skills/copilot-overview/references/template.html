@@ -284,6 +284,228 @@
     pointer-events:none; z-index:100;
   }
   .pv-toast.show { opacity:1; }
+
+  /* ============================================================
+     UX OVERHAUL — clickability cues, callouts, comparison table,
+     anatomy diagram, age banner, refresh tool, installed toggle.
+     ============================================================ */
+
+  .hint { color: var(--text-dim); font-size: 0.78rem; margin: 6px 0 12px; font-style: italic; }
+
+  /* Idle pulse for first stack card (one-time per browser via localStorage) */
+  @keyframes idle-pulse {
+    0%, 100% { transform: scale(1); color: var(--text-dim); }
+    35%      { transform: scale(1.5); color: var(--blue); }
+    70%      { transform: scale(1); color: var(--text-dim); }
+  }
+  .idle-pulse { animation: idle-pulse 1.1s ease-in-out 2; display: inline-block; transform-origin: center; }
+
+  /* Stack card affordance */
+  .stack-card {
+    transition: background-color 0.15s, border-left-width 0.15s, transform 0.1s, filter 0.15s;
+    border-left-width: 3px;
+  }
+  .stack-card:hover {
+    filter: brightness(1.35) saturate(1.1);
+    border-left-width: 5px;
+  }
+  .stack-chevron {
+    margin-left: auto; color: var(--text-dim); font-size: 0.95rem;
+    transition: transform 0.2s, color 0.15s; display: inline-block;
+  }
+  .stack-card.open .stack-chevron { transform: rotate(180deg); color: var(--text-bright); }
+
+  /* Equation card chevron */
+  .model-card { position: relative; transition: background-color 0.15s, border-color 0.15s; }
+  .model-card:hover { background-color: rgba(255,255,255,0.02); }
+  .model-card .eq-chevron {
+    position: absolute; top: 12px; right: 14px;
+    color: var(--text-dim); font-size: 0.9rem;
+    transition: transform 0.2s, color 0.15s;
+  }
+  .model-card.expanded .eq-chevron { transform: rotate(180deg); color: var(--text-bright); }
+
+  /* Intro paragraph (only when fresh) */
+  .intro { color: var(--text); font-size: 0.92rem; line-height: 1.6; margin: 0 0 16px; max-width: 68ch; }
+
+  /* Age banner + refresh button row */
+  .age-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 4px 0 16px; }
+  .age-banner {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 5px 12px; border-radius: 999px; font-size: 0.8rem; font-weight: 500;
+    border: 1px solid;
+  }
+  .age-banner.fresh { background: rgba(63,185,80,0.12); color: var(--green); border-color: rgba(63,185,80,0.4); }
+  .age-banner.warn  { background: rgba(210,153,34,0.12); color: var(--orange); border-color: rgba(210,153,34,0.45); }
+  .age-banner.stale { background: rgba(248,81,73,0.12); color: var(--red); border-color: rgba(248,81,73,0.45); }
+  .age-banner .age-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+
+  .refresh-tool { position: relative; }
+  .refresh-btn {
+    background: var(--surface); border: 1px solid var(--border); color: var(--text);
+    padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.82rem;
+    font-family: inherit; transition: all 0.15s;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .refresh-btn:hover { border-color: var(--blue); color: var(--text-bright); }
+  .refresh-btn code {
+    font-family: 'SFMono-Regular', Consolas, monospace;
+    color: var(--orange); background: rgba(210,153,34,0.12);
+    padding: 1px 5px; border-radius: 3px; font-size: 0.78rem;
+  }
+  .refresh-tooltip {
+    position: absolute; top: calc(100% + 6px); left: 0;
+    background: var(--surface); border: 1px solid var(--green); color: var(--text);
+    padding: 7px 12px; border-radius: 6px; font-size: 0.78rem; white-space: nowrap;
+    opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 20;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+  }
+  .refresh-tooltip.show { opacity: 1; }
+
+  /* Try this first — terminal mockup */
+  .terminal-mock {
+    background: #0a0d12; border: 1px solid #1f2632; border-radius: 8px;
+    margin-bottom: 24px; overflow: hidden;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.35);
+    font-family: 'SFMono-Regular', Consolas, 'Cascadia Mono', monospace;
+  }
+  .terminal-bar {
+    background: linear-gradient(180deg, #1c2230, #161b22);
+    border-bottom: 1px solid #1f2632;
+    padding: 8px 14px; display: flex; align-items: center; gap: 8px;
+    position: relative;
+  }
+  .terminal-dot {
+    width: 11px; height: 11px; border-radius: 50%; display: inline-block;
+    border: 0.5px solid rgba(0,0,0,0.25);
+  }
+  .terminal-title {
+    position: absolute; left: 50%; transform: translateX(-50%);
+    color: var(--text-dim); font-size: 0.74rem; letter-spacing: 0.4px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  .terminal-body { padding: 14px 18px 16px; }
+  .terminal-intro {
+    color: var(--text-dim); font-size: 0.78rem; margin-bottom: 12px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  .terminal-line {
+    display: flex; align-items: baseline; gap: 8px;
+    padding: 5px 0; font-size: 0.86rem; line-height: 1.5;
+    border-radius: 4px; padding-left: 4px; padding-right: 4px;
+    cursor: pointer; transition: background 0.12s;
+  }
+  .terminal-line:hover { background: rgba(255,255,255,0.04); }
+  .terminal-line:hover .terminal-copy { opacity: 1; }
+  .terminal-line .prompt {
+    color: var(--green); font-weight: 700; user-select: none; flex-shrink: 0;
+  }
+  .terminal-line .cmd {
+    color: #f0f6fc; font-weight: 500;
+  }
+  .terminal-line .comment {
+    color: var(--text-dim); font-style: italic; flex: 1;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 0.78rem;
+  }
+  .terminal-copy {
+    color: var(--text-dim); font-size: 0.7rem; opacity: 0;
+    transition: opacity 0.12s; user-select: none; flex-shrink: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  .terminal-line.copied .terminal-copy {
+    opacity: 1; color: var(--green);
+  }
+  .terminal-foot {
+    color: var(--text-dim); font-size: 0.74rem; margin-top: 10px;
+    padding-top: 10px; border-top: 1px solid #1f2632;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  .terminal-foot code {
+    background: rgba(63,185,80,0.1); color: var(--green);
+    padding: 1px 6px; border-radius: 3px;
+    font-family: 'SFMono-Regular', Consolas, monospace; font-size: 0.74rem;
+  }
+
+  /* Skill / Agent / Extension comparison table */
+  .compare-wrap { margin-top: 18px; overflow-x: auto; }
+  .compare-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  .compare-table th, .compare-table td {
+    text-align: left; padding: 10px 12px;
+    border-bottom: 1px solid var(--border); vertical-align: top;
+  }
+  .compare-table th {
+    color: var(--text-bright); font-size: 0.72rem;
+    text-transform: uppercase; letter-spacing: 0.6px;
+    background: rgba(255,255,255,0.025); font-weight: 600;
+  }
+  .compare-table td:first-child { color: var(--text-bright); font-weight: 600; white-space: nowrap; }
+  .compare-table code {
+    font-family: 'SFMono-Regular', Consolas, monospace;
+    color: var(--orange); background: rgba(210,153,34,0.1);
+    padding: 1px 5px; border-radius: 3px; font-size: 0.78rem;
+  }
+  .mcp-note {
+    margin-top: 14px; padding: 10px 14px;
+    background: rgba(88,166,255,0.06); border-left: 2px solid var(--blue);
+    border-radius: 4px; color: var(--text); font-size: 0.83rem; line-height: 1.55;
+  }
+
+  /* Anatomy of a request */
+  .anatomy-explainer h2 { margin-bottom: 6px; }
+  .anatomy {
+    font-family: 'SFMono-Regular', Consolas, monospace;
+    font-size: 0.82rem; line-height: 1.95; color: var(--text);
+    background: rgba(0,0,0,0.28); padding: 16px 18px;
+    border-radius: 6px; border: 1px solid var(--border);
+    overflow-x: auto; margin-top: 10px;
+  }
+  .anatomy .step { display: block; }
+  .anatomy .arrow { color: var(--text-dim); display: block; padding-left: 8px; }
+  .anatomy .l-cli   { color: var(--green); }
+  .anatomy .l-skill { color: var(--purple); }
+  .anatomy .l-ext   { color: var(--cyan); }
+  .anatomy .l-model { color: var(--blue); }
+  .anatomy .l-you   { color: var(--text-bright); }
+
+  /* Privacy callout */
+  .privacy {
+    background: rgba(63,185,80,0.06);
+    border: 1px solid rgba(63,185,80,0.3);
+    border-radius: var(--radius);
+    padding: 12px 18px; margin: 24px 0 16px;
+    font-size: 0.86rem; color: var(--text);
+    display: flex; align-items: center; gap: 12px; line-height: 1.5;
+  }
+  .privacy .lock { font-size: 1.1rem; }
+
+  /* "Show what's installed" toggle */
+  .installed-toggle {
+    width: 100%; background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 14px 18px;
+    display: flex; align-items: center; gap: 12px;
+    cursor: pointer; font-family: inherit; color: var(--text);
+    font-size: 1rem; font-weight: 600; text-align: left;
+    margin-bottom: 12px; transition: border-color 0.15s, background 0.15s;
+  }
+  .installed-toggle:hover { border-color: var(--blue); background: rgba(255,255,255,0.025); }
+  .installed-toggle .it-icon { font-size: 1.2rem; }
+  .installed-toggle .it-chevron {
+    margin-left: auto; transition: transform 0.2s; color: var(--text-dim); font-size: 0.95rem;
+  }
+  .installed-toggle.open .it-chevron { transform: rotate(180deg); color: var(--text-bright); }
+  .installed-toggle .it-count { font-size: 0.78rem; color: var(--text-dim); font-weight: 400; }
+  #installed-content { display: none; }
+  #installed-content.open { display: block; }
+
+  /* Expand-all / Collapse-all buttons inside filter-bar */
+  .toggle-all-wrap { display: flex; gap: 8px; margin-left: auto; }
+  .toggle-all-btn {
+    background: transparent; border: 1px solid var(--border); color: var(--text-dim);
+    padding: 5px 12px; border-radius: 6px; cursor: pointer;
+    font-size: 0.76rem; font-family: inherit; transition: all 0.15s;
+  }
+  .toggle-all-btn:hover { border-color: var(--blue); color: var(--blue); }
 </style>
 </head>
 <body>
@@ -312,11 +534,20 @@ const DASHBOARD_GENERATED_AT = window.DASHBOARD.generated_at || null;
 </script>
 
 <h1>⚡ Copilot CLI Overview</h1>
-<p class="subtitle" id="subtitle">Your Copilot CLI environment at a glance</p>
+<p class="subtitle" id="subtitle">What's loaded when you type <code style="font-family:'SFMono-Regular',Consolas,monospace;color:var(--orange);background:rgba(210,153,34,0.1);padding:1px 6px;border-radius:3px;font-size:0.85rem;">copilot</code>. How the pieces fit together.</p>
+<p class="intro" id="intro" style="display:none">Five layers. Six file conventions. One terminal. Click any card below to learn what it does. The stats jump you to the live inventory of what's installed.</p>
+
+<div class="age-row" id="age-row">
+  <span class="age-banner" id="age-banner" style="display:none"></span>
+  <div class="refresh-tool">
+    <button class="refresh-btn" id="refresh-btn" onclick="copyRefreshPrompt()">🔄 Refresh: type <code>refresh overview</code> in your CLI</button>
+    <div class="refresh-tooltip" id="refresh-tooltip">Copied! Paste into any Copilot CLI session.</div>
+  </div>
+</div>
+
 <div class="meta-bar" id="meta-bar"></div>
 
-<!-- Dashboard status strip: freshness + update banner -->
-<div id="dash-status" class="dash-status" style="display:none"></div>
+<!-- Dashboard update banner (only shown when data.js polling detects a new version) -->
 <div id="dash-update" class="dash-update" style="display:none" onclick="location.reload()">
   <span>🔔 New data available — click to reload</span>
 </div>
@@ -332,6 +563,45 @@ const DASHBOARD_GENERATED_AT = window.DASHBOARD.generated_at || null;
      ============================================================ -->
 <div class="view active" id="view-environment">
 
+<!-- Try this first — terminal mockup makes it unmistakable these go into a CLI -->
+<div class="terminal-mock" id="try-terminal">
+  <div class="terminal-bar">
+    <span class="terminal-dot" style="background:#ff5f57"></span>
+    <span class="terminal-dot" style="background:#febc2e"></span>
+    <span class="terminal-dot" style="background:#28c840"></span>
+    <span class="terminal-title">Copilot CLI · try these prompts</span>
+  </div>
+  <div class="terminal-body">
+    <div class="terminal-intro">Open a terminal, type <code style="color:var(--green);background:rgba(63,185,80,0.1);padding:1px 6px;border-radius:3px;font-family:'SFMono-Regular',Consolas,monospace;">copilot</code>, then paste any of these:</div>
+    <div class="terminal-line" data-cmd="show my projects">
+      <span class="prompt">›</span><span class="cmd">show my projects</span>
+      <span class="comment"># discovers your local repos</span>
+      <span class="terminal-copy">click to copy</span>
+    </div>
+    <div class="terminal-line" data-cmd="what skills do I have">
+      <span class="prompt">›</span><span class="cmd">what skills do I have</span>
+      <span class="comment"># lists installed skills</span>
+      <span class="terminal-copy">click to copy</span>
+    </div>
+    <div class="terminal-line" data-cmd="open my latest screenshot">
+      <span class="prompt">›</span><span class="cmd">open my latest screenshot</span>
+      <span class="comment"># demonstrates the screenshots extension</span>
+      <span class="terminal-copy">click to copy</span>
+    </div>
+    <div class="terminal-line" data-cmd="summarize my CLI environment">
+      <span class="prompt">›</span><span class="cmd">summarize my CLI environment</span>
+      <span class="comment"># triggers this dashboard</span>
+      <span class="terminal-copy">click to copy</span>
+    </div>
+    <div class="terminal-line" data-cmd="refresh overview">
+      <span class="prompt">›</span><span class="cmd">refresh overview</span>
+      <span class="comment"># regenerates this page</span>
+      <span class="terminal-copy">click to copy</span>
+    </div>
+    <div class="terminal-foot">Hover a line and click to copy the prompt. Type <code>/help</code> in Copilot CLI to see all slash commands.</div>
+  </div>
+</div>
+
 <!-- Stats bar -->
 <div class="stats" id="stats-bar"></div>
 
@@ -340,15 +610,17 @@ const DASHBOARD_GENERATED_AT = window.DASHBOARD.generated_at || null;
      ============================================================ -->
 <div class="explainer" style="margin-bottom:24px">
   <h2>The operating stack</h2>
-  <p style="color:var(--text-dim); font-size:0.85rem; margin-bottom:16px;">Five layers, bottom-up. M365 Copilot is the foundation. Each layer builds on the one below.</p>
+  <p style="color:var(--text-dim); font-size:0.85rem; margin-bottom:6px;">Five layers, bottom-up. M365 Copilot is the foundation. Each layer builds on the one below.</p>
+  <p class="hint">Click any layer to expand.</p>
   <div style="display:flex; flex-direction:column; gap:2px;">
 
-    <div class="stack-card" style="background:rgba(210,153,34,0.08); border-left:3px solid var(--orange); margin-left:96px;" onclick="this.classList.toggle('open')">
+    <div class="stack-card" id="stack-squad" style="background:rgba(210,153,34,0.08); border-left:3px solid var(--orange); margin-left:96px;" onclick="this.classList.toggle('open')">
       <div style="display:flex; align-items:center; gap:10px;">
         <span style="font-size:1.2rem;">👥</span>
         <span class="stack-title">Squad</span>
         <span class="stack-sub">— multi-agent orchestration</span>
         <span class="stack-badge">optional · per-project</span>
+        <span class="stack-chevron">▾</span>
       </div>
       <div class="detail">
         Persistent team of specialized AI agents in your repo.<br>
@@ -364,6 +636,7 @@ const DASHBOARD_GENERATED_AT = window.DASHBOARD.generated_at || null;
         <span class="stack-title">Agency</span>
         <span class="stack-sub">— built-in agentic runtime</span>
         <span class="stack-badge">built-in · no install</span>
+        <span class="stack-chevron">▾</span>
       </div>
       <div class="detail">
         CLI spawns sub-agents in parallel. One orchestrator delegating to specialists.<br>
@@ -379,11 +652,12 @@ const DASHBOARD_GENERATED_AT = window.DASHBOARD.generated_at || null;
         <span class="stack-title">Copilot CLI</span>
         <span class="stack-sub">— terminal-native interface</span>
         <span class="stack-badge">← this dashboard</span>
+        <span class="stack-chevron">▾</span>
       </div>
       <div class="detail">
         Conversational AI agent in your terminal. Reads, writes, and executes code.<br>
         <strong style="color:var(--text)">Extensibility:</strong> instructions, agents, skills, MCP servers, extensions, plugins<br>
-        <strong style="color:var(--text)">Modes:</strong> Normal, Plan, Autopilot<br>
+        <strong style="color:var(--text)">Modes:</strong> Normal (default), Plan (Shift+Tab to toggle), Autopilot (<code>--autopilot</code> flag). Plan mode is the safe default for first-time use — the model proposes, you approve.<br>
         <strong style="color:var(--text)">Install:</strong> <code>winget install GitHub.Copilot</code> · <code>brew install copilot-cli</code> · <code>npm install -g @github/copilot</code>
       </div>
     </div>
@@ -393,6 +667,7 @@ const DASHBOARD_GENERATED_AT = window.DASHBOARD.generated_at || null;
         <span style="font-size:1.2rem;">🐙</span>
         <span class="stack-title">GitHub Copilot</span>
         <span class="stack-sub">— the developer AI platform</span>
+        <span class="stack-chevron">▾</span>
       </div>
       <div class="detail">
         GitHub's AI platform. Four surfaces:<br>
@@ -409,7 +684,7 @@ const DASHBOARD_GENERATED_AT = window.DASHBOARD.generated_at || null;
         <span style="font-size:1.2rem;">🏢</span>
         <span class="stack-title">Microsoft 365 Copilot</span>
         <span class="stack-sub">— enterprise AI foundation</span>
-        <span class="stack-badge">click to expand ↓</span>
+        <span class="stack-chevron">▾</span>
       </div>
       <div class="detail">
         Microsoft's AI layer across the productivity suite.<br>
@@ -436,8 +711,10 @@ const DASHBOARD_GENERATED_AT = window.DASHBOARD.generated_at || null;
      ============================================================ -->
 <div class="explainer">
   <h2>How the layers connect</h2>
+  <p class="hint">Click any card to expand.</p>
   <div class="model-grid">
     <div class="model-card" onclick="this.classList.toggle('expanded')">
+      <span class="eq-chevron">▾</span>
       <span class="eq">Instructions =</span> <strong>HOW</strong> to behave<br>
       <span style="color:var(--text-dim)">Personality, rules, guardrails. Plain markdown.</span>
       <span class="learn-more">Learn more ↓</span>
@@ -449,6 +726,7 @@ const DASHBOARD_GENERATED_AT = window.DASHBOARD.generated_at || null;
       </div>
     </div>
     <div class="model-card" onclick="this.classList.toggle('expanded')">
+      <span class="eq-chevron">▾</span>
       <span class="eq">Agents =</span> <strong>PERSONA</strong><br>
       <span style="color:var(--text-dim)">Specialized roles invoked by name. No code.</span>
       <span class="learn-more">Learn more ↓</span>
@@ -460,6 +738,7 @@ const DASHBOARD_GENERATED_AT = window.DASHBOARD.generated_at || null;
       </div>
     </div>
     <div class="model-card" onclick="this.classList.toggle('expanded')">
+      <span class="eq-chevron">▾</span>
       <span class="eq">Skills =</span> <strong>KNOWLEDGE</strong><br>
       <span style="color:var(--text-dim)">Auto-triggered bundles with docs, templates, scripts.</span>
       <span class="learn-more">Learn more ↓</span>
@@ -471,6 +750,7 @@ const DASHBOARD_GENERATED_AT = window.DASHBOARD.generated_at || null;
       </div>
     </div>
     <div class="model-card" onclick="this.classList.toggle('expanded')">
+      <span class="eq-chevron">▾</span>
       <span class="eq">MCP Servers =</span> <strong>CAPABILITIES</strong><br>
       <span style="color:var(--text-dim)">External APIs exposed as callable tools.</span>
       <span class="learn-more">Learn more ↓</span>
@@ -482,6 +762,7 @@ const DASHBOARD_GENERATED_AT = window.DASHBOARD.generated_at || null;
       </div>
     </div>
     <div class="model-card" onclick="this.classList.toggle('expanded')">
+      <span class="eq-chevron">▾</span>
       <span class="eq">Extensions =</span> <strong>CODE</strong><br>
       <span style="color:var(--text-dim)">JavaScript hooks that intercept and transform prompts.</span>
       <span class="learn-more">Learn more ↓</span>
@@ -493,15 +774,54 @@ const DASHBOARD_GENERATED_AT = window.DASHBOARD.generated_at || null;
       </div>
     </div>
     <div class="model-card" onclick="this.classList.toggle('expanded')">
+      <span class="eq-chevron">▾</span>
       <span class="eq">Plugins =</span> <strong>BUNDLES</strong><br>
       <span style="color:var(--text-dim)">Installable packages from GitHub repos.</span>
       <span class="learn-more">Learn more ↓</span>
       <div class="card-details">
         <strong>Install:</strong> <code>/plugin install owner/repo</code><br>
         <strong>Location:</strong> <code>~/.copilot/installed-plugins/</code><br>
+        <strong>Structure:</strong> A plugin is a folder under <code>~/.copilot/installed-plugins/</code> that bundles agents, skills, and MCP servers under a single <code>plugin.json</code> manifest. Installed via <code>gh copilot plugin install</code>.<br>
         <strong>How it works:</strong> A plugin bundles agents, skills, and tools. All contents available in every session.
       </div>
     </div>
+  </div>
+
+  <div class="mcp-note">
+    <strong>MCP, the interop standard.</strong> MCP servers are standalone processes any AI tool can call. Cross-language, can run remote, not tied to one CLI — that's what makes them the interop standard.
+  </div>
+
+  <div class="compare-wrap">
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Concept</th>
+          <th>What it is</th>
+          <th>File</th>
+          <th>When to make one</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Skill</td>
+          <td>A prompt the model follows when its description matches your ask</td>
+          <td><code>SKILL.md</code> (markdown)</td>
+          <td>You want the model to follow a specific procedure</td>
+        </tr>
+        <tr>
+          <td>Agent</td>
+          <td>A persona the model becomes when invoked by name</td>
+          <td><code>*.agent.md</code> (markdown + YAML frontmatter)</td>
+          <td>You want a specialized role with its own context</td>
+        </tr>
+        <tr>
+          <td>Extension</td>
+          <td>A tool written in JavaScript that the model can call</td>
+          <td><code>extension.mjs</code> (Node ES module)</td>
+          <td>You want to add a real CAPABILITY (API call, file access)</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </div>
 
@@ -537,10 +857,27 @@ const DASHBOARD_GENERATED_AT = window.DASHBOARD.generated_at || null;
 </div>
 
 <!-- ============================================================
+     ANATOMY OF A REQUEST — Static explainer
+     ============================================================ -->
+<div class="explainer anatomy-explainer">
+  <h2>Anatomy of a request</h2>
+  <p style="color:var(--text-dim); font-size:0.85rem; margin-bottom:4px;">How <code style="font-family:'SFMono-Regular',Consolas,monospace;color:var(--orange);background:rgba(210,153,34,0.1);padding:1px 5px;border-radius:3px;">generate my copilot overview</code> flows through the layers.</p>
+  <div class="anatomy"><span class="step"><span class="l-you">You</span> type <span class="l-you">"generate my copilot overview"</span></span><span class="arrow">↓</span><span class="step"><span class="l-cli">CLI</span> matches the skill description in <span class="l-skill">SKILL.md</span></span><span class="arrow">↓</span><span class="step"><span class="l-model">Model</span> reads the instructions, calls the <span class="l-ext">discover_copilot_environment</span> tool (extension)</span><span class="arrow">↓</span><span class="step"><span class="l-ext">Tool</span> scans <code>~/.copilot/</code>, plugins, your projects → returns <code>ENV_DATA</code></span><span class="arrow">↓</span><span class="step"><span class="l-model">Model</span> writes <code>ENV_DATA</code> into <code>template.html</code> → saves to <code>_output/copilot-overview/</code></span><span class="arrow">↓</span><span class="step"><span class="l-you">You</span> see this page</span></div>
+</div>
+
+<!-- ============================================================
      DYNAMIC SECTIONS — Rendered from ENV_DATA by JavaScript
      ============================================================ -->
-<div class="filter-bar" id="filter-bar"></div>
-<div id="dynamic-sections"></div>
+<button class="installed-toggle" id="installed-toggle" onclick="toggleInstalled()" aria-expanded="false">
+  <span class="it-icon">📚</span>
+  <span>What's installed in your environment</span>
+  <span class="it-count" id="installed-count"></span>
+  <span class="it-chevron">▾</span>
+</button>
+<div id="installed-content">
+  <div class="filter-bar" id="filter-bar"></div>
+  <div id="dynamic-sections"></div>
+</div>
 
 </div> <!-- /view-environment -->
 
@@ -558,8 +895,14 @@ const DASHBOARD_GENERATED_AT = window.DASHBOARD.generated_at || null;
 
 <div class="pv-toast" id="pv-toast"></div>
 
+<!-- Privacy callout -->
+<div class="privacy">
+  <span class="lock">🔒</span>
+  <span>Everything on this page is text from your local files. Generating it does not send anything to GitHub, Microsoft, or any other server.</span>
+</div>
+
 <footer id="footer">
-  Snapshot of current environment. Run <code>/env</code> in Copilot CLI to see what's loaded in your session.
+  Snapshot of <code>~/.copilot/</code> and your projects at the time generated. To regenerate, type <code>refresh overview</code> in any Copilot CLI session. To see help, type <code>/help</code>.
 </footer>
 
 <script>
@@ -691,7 +1034,18 @@ function renderFilterBar() {
     <button class="filter-btn" onclick="filterScope('global',this)">Global</button>
     <button class="filter-btn" onclick="filterScope('plugin',this)">Plugin</button>
     <button class="filter-btn" onclick="filterScope('system',this)">System</button>
+    <div class="toggle-all-wrap">
+      <button class="toggle-all-btn" onclick="expandAllLayers()">Expand all</button>
+      <button class="toggle-all-btn" onclick="collapseAllLayers()">Collapse all</button>
+    </div>
   `;
+}
+
+function expandAllLayers() {
+  document.querySelectorAll('#dynamic-sections .layer').forEach(l => l.classList.add('open'));
+}
+function collapseAllLayers() {
+  document.querySelectorAll('#dynamic-sections .layer').forEach(l => l.classList.remove('open'));
 }
 
 function filterScope(scope, btn) {
@@ -743,7 +1097,10 @@ function render() {
   document.getElementById('dynamic-sections').innerHTML = sections.join('');
 
   const m = ENV_DATA.meta;
-  document.getElementById('footer').innerHTML = `Snapshot of current environment. Run <code>/env</code> in Copilot CLI to see what's loaded.<br>Generated: ${m.generatedAt ? new Date(m.generatedAt).toLocaleString() : 'unknown'}`;
+  document.getElementById('footer').innerHTML = `Snapshot of <code>~/.copilot/</code> and your projects at the time generated. To regenerate, type <code>refresh overview</code> in any Copilot CLI session. To see help, type <code>/help</code>.<br>Generated: ${m.generatedAt ? new Date(m.generatedAt).toLocaleString() : 'unknown'}`;
+
+  // Update installed-toggle count and apply UX features
+  applyUxFeatures();
 }
 
 render();
@@ -932,6 +1289,179 @@ function applyRenderMode() {
 
 renderProjectsView();
 applyRenderMode();
+
+// ============================================================
+// UX OVERHAUL — age banner, refresh tool, installed toggle, idle pulse
+// ============================================================
+
+const INSTALLED_KEY = 'copilotOverviewInstalledOpen_v1';
+const PULSE_SEEN_KEY = 'copilotOverviewSeenPulse_v1';
+
+function toggleInstalled() {
+  const btn = document.getElementById('installed-toggle');
+  const content = document.getElementById('installed-content');
+  if (!btn || !content) return;
+  const open = !content.classList.contains('open');
+  content.classList.toggle('open', open);
+  btn.classList.toggle('open', open);
+  btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  try { localStorage.setItem(INSTALLED_KEY, open ? '1' : '0'); } catch (e) {}
+}
+
+function describeAge(days) {
+  if (days < 1) return 'today';
+  if (days === 1) return '1 day old';
+  if (days < 14) return days + ' days old';
+  if (days < 60) {
+    const w = Math.round(days / 7);
+    return w + ' week' + (w === 1 ? '' : 's') + ' old';
+  }
+  const months = Math.round(days / 30);
+  return months + ' month' + (months === 1 ? '' : 's') + ' old';
+}
+
+function renderAgeBanner() {
+  const el = document.getElementById('age-banner');
+  if (!el) return;
+  const iso = (ENV_DATA && ENV_DATA.meta && ENV_DATA.meta.generatedAt) || DASHBOARD_GENERATED_AT;
+  if (!iso) return;
+  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+  const ageText = describeAge(days);
+  let cls = 'fresh', label = 'Fresh — ' + ageText;
+  if (days > 30) { cls = 'stale'; label = 'Snapshot is ' + ageText + ' — refresh recommended'; }
+  else if (days > 7) { cls = 'warn'; label = 'Snapshot is ' + ageText; }
+  el.className = 'age-banner ' + cls;
+  el.innerHTML = '<span class="age-dot"></span><span>' + label + '</span>';
+  el.style.display = '';
+
+  // Show intro only when fresh (≤7 days)
+  const intro = document.getElementById('intro');
+  if (intro) intro.style.display = (days <= 7) ? '' : 'none';
+}
+
+// Override the dashboardLiveness copyRefreshPrompt with a version that also
+// drives the inline tooltip near the new refresh button.
+window.copyRefreshPrompt = function() {
+  const prompt = 'refresh overview';
+  const tip = document.getElementById('refresh-tooltip');
+  const finish = () => {
+    if (tip) {
+      tip.classList.add('show');
+      setTimeout(() => tip.classList.remove('show'), 3000);
+    }
+    if (typeof showToast === 'function') showToast('Copied — paste into Copilot CLI');
+  };
+  const fallback = () => {
+    const ta = document.createElement('textarea');
+    ta.value = prompt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    finish();
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(prompt).then(finish).catch(fallback);
+  } else {
+    fallback();
+  }
+};
+
+function applyUxFeatures() {
+  renderAgeBanner();
+
+  // Wire up click-to-copy on terminal-mock lines (the Try-this-first block).
+  document.querySelectorAll('#try-terminal .terminal-line').forEach((line) => {
+    line.addEventListener('click', () => {
+      const cmd = line.dataset.cmd || '';
+      if (!cmd) return;
+      const finish = () => {
+        line.classList.add('copied');
+        const copyLabel = line.querySelector('.terminal-copy');
+        if (copyLabel) {
+          const orig = copyLabel.textContent;
+          copyLabel.textContent = 'copied!';
+          setTimeout(() => { copyLabel.textContent = orig; line.classList.remove('copied'); }, 1500);
+        }
+      };
+      const fallback = () => {
+        const ta = document.createElement('textarea');
+        ta.value = cmd; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); } catch (e) {}
+        document.body.removeChild(ta);
+        finish();
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(cmd).then(finish).catch(fallback);
+      } else {
+        fallback();
+      }
+    });
+  });
+
+  // Restore installed-toggle state (default: closed)
+  let open = '0';
+  try { open = localStorage.getItem(INSTALLED_KEY) || '0'; } catch (e) {}
+  if (open === '1') {
+    const btn = document.getElementById('installed-toggle');
+    const content = document.getElementById('installed-content');
+    if (btn && content) {
+      btn.classList.add('open');
+      content.classList.add('open');
+      btn.setAttribute('aria-expanded', 'true');
+    }
+  }
+
+  // Installed-toggle count summary (e.g., "32 items")
+  const d = ENV_DATA;
+  if (d && d.instructions) {
+    const total =
+      (d.instructions || []).length +
+      (d.agents || []).length +
+      (d.skills || []).length +
+      (d.mcpServers || []).length +
+      (d.extensions || []).length +
+      (d.plugins || []).length +
+      ((d.lspServers && d.lspServers.length) || 0) +
+      ((d.projects && d.projects.length) || 0);
+    const cnt = document.getElementById('installed-count');
+    if (cnt) cnt.textContent = total + ' item' + (total === 1 ? '' : 's');
+  }
+
+  // Idle pulse on the first stack card chevron (once per browser)
+  let seen = '0';
+  try { seen = localStorage.getItem(PULSE_SEEN_KEY) || '0'; } catch (e) {}
+  if (seen !== '1') {
+    let triggered = false;
+    const fire = () => {
+      if (triggered) return;
+      triggered = true;
+      const firstChevron = document.querySelector('#stack-squad .stack-chevron');
+      if (firstChevron) {
+        firstChevron.classList.add('idle-pulse');
+        setTimeout(() => firstChevron.classList.remove('idle-pulse'), 2400);
+      }
+      try { localStorage.setItem(PULSE_SEEN_KEY, '1'); } catch (e) {}
+      cleanup();
+    };
+    const cancel = () => { triggered = true; cleanup(); try { localStorage.setItem(PULSE_SEEN_KEY, '1'); } catch (e) {} };
+    const timer = setTimeout(fire, 4000);
+    const cleanup = () => {
+      clearTimeout(timer);
+      document.removeEventListener('click', cancel, true);
+      document.removeEventListener('keydown', cancel, true);
+      document.removeEventListener('scroll', cancel, true);
+    };
+    document.addEventListener('click', cancel, true);
+    document.addEventListener('keydown', cancel, true);
+    document.addEventListener('scroll', cancel, true);
+  }
+}
+
+// If ENV_DATA failed to render (no meta), still wire up the refresh tool + age banner.
+if (!ENV_DATA || !ENV_DATA.meta) {
+  renderAgeBanner();
+}
 
 // ============================================================
 // DASHBOARD LIVENESS — staleness, polling, state preservation
